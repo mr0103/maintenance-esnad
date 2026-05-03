@@ -459,7 +459,8 @@ export default function App() {
           ...item,
           docId: doc.id, // Store original Firestore document ID
           timestamp: item.timestamp?.toDate ? item.timestamp.toDate() : new Date(item.timestamp),
-          completionTime: item.completionTime?.toDate ? item.completionTime.toDate() : (item.completionTime ? new Date(item.completionTime) : null)
+          completionTime: item.completionTime?.toDate ? item.completionTime.toDate() : (item.completionTime ? new Date(item.completionTime) : null),
+          lastSentDate: item.lastSentDate?.toDate ? item.lastSentDate.toDate() : (item.lastSentDate ? new Date(item.lastSentDate) : null)
         };
       }).filter(Boolean);
 
