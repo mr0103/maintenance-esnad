@@ -1,0 +1,83 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Application user and their permissions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "password": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "department": { "type": "string" },
+        "permissions": { "type": "object" }
+      },
+      "required": ["name", "username", "role", "password", "permissions"]
+    },
+    "Section": {
+      "title": "Section",
+      "description": "Definition of a maintenance section/mجمع",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "questions": { "type": "array" },
+        "availableStatuses": { "type": "array" },
+        "sectionUnits": { "type": "array" }
+      },
+      "required": ["id", "name", "isActive", "questions", "availableStatuses", "sectionUnits"]
+    },
+    "Request": {
+      "title": "Request",
+      "description": "A maintenance request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number" },
+        "sectionId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "submitterName": { "type": "string" },
+        "submitterDept": { "type": "string" },
+        "answers": { "type": "object" },
+        "assignedUnit": { "type": "string" },
+        "status": { "type": "string" },
+        "completionTime": { "type": "string", "format": "date-time" },
+        "sectionNotes": { "type": "string" },
+        "lastSent": { "type": "string" }
+      },
+      "required": ["id", "sectionId", "timestamp", "submitterName", "answers"]
+    },
+    "GlobalSettings": {
+      "title": "Global Settings",
+      "description": "System-wide settings",
+      "type": "object",
+      "properties": {
+        "globalUnits": { "type": "array" },
+        "whatsappTemplate": { "type": "string" }
+      },
+      "required": ["globalUnits", "whatsappTemplate"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Collection of users"
+    },
+    "sections/{sectionId}": {
+      "schema": "Section",
+      "description": "Collection of sections"
+    },
+    "requests/{requestId}": {
+      "schema": "Request",
+      "description": "Collection of requests"
+    },
+    "settings/global": {
+      "schema": "GlobalSettings",
+      "description": "Global system settings"
+    }
+  }
+}

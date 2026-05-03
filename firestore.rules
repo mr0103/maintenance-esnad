@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) { 
+      return id is string && id.size() <= 128; 
+    }
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Requests collection
+    match /requests/{requestId} {
+      // NOTE: For prototype, allowing public read/write but adding schema validation
+      // In production, this should be restricted to signed-in users with specific roles
+      allow list, get: if true;
+      allow create: if true && isValidRequest(request.resource.data);
+      allow update: if true && isValidRequest(request.resource.data);
+      allow delete: if true;
+    }
+
+    function isValidRequest(data) {
+      return data.keys().hasAll(['id', 'sectionId', 'timestamp', 'submitterName', 'answers']) 
+        && data.sectionId is string
+        && data.submitterName is string;
+    }
+
+    // Sections collection
+    match /sections/{sectionId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Settings collection
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    // Test collection
+    match /test-connection/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
