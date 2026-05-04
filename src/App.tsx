@@ -758,6 +758,14 @@ export default function App() {
             'هنالك اشعار عمل جديد في المجمع',
             `قسم: ${sectionName} | مقدم الطلب: ${r.submitterName}`
           );
+          
+          // إظهار النافذة الجانبية تلقائياً لمدة 3 ثوانٍ إذا كانت مخفية
+          if (!isDesktopSidebarOpen) {
+            setIsDesktopSidebarOpen(true);
+            setTimeout(() => {
+              setIsDesktopSidebarOpen(false);
+            }, 3000);
+          }
         }
         notifiedRequests.current.add(r.id);
       }
@@ -1594,14 +1602,32 @@ export default function App() {
             </div>
           </aside>
 
-          {/* Desktop Sidebar Toggle Button */}
-          <button
-            onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)}
-            className={`hidden lg:flex fixed top-6 z-[120] items-center justify-center w-12 h-12 bg-white text-[#1a5e1a] rounded-[1.2rem] shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-gray-100 hover:bg-[#1a5e1a] hover:text-white hover:scale-110 hover:-translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isDesktopSidebarOpen ? 'right-[320px]' : 'right-6'} group`}
-            title={isDesktopSidebarOpen ? 'إخفاء القائمة الجانبية لتوسيع الشاشة' : 'إظهار القائمة الجانبية'}
-          >
-            <Menu size={22} className="group-hover:rotate-180 transition-transform duration-500" />
-          </button>
+          {/* Sidebar Toggle Buttons */}
+          <div className="hidden lg:block">
+            {/* Close Button (Visible when sidebar is open) */}
+            {isDesktopSidebarOpen && (
+              <button
+                onClick={() => setIsDesktopSidebarOpen(false)}
+                className="fixed top-0 right-[255px] z-[120] w-[45px] h-[45px] btn-3d-square group border-none"
+                title="إغلاق القائمة"
+              >
+                <LogOut size={22} className="rotate-180 transition-transform group-hover:-translate-x-1" />
+              </button>
+            )}
+
+            {/* Open Button (Visible when sidebar is closed) */}
+            {!isDesktopSidebarOpen && (
+              <button
+                onClick={() => setIsDesktopSidebarOpen(true)}
+                className="fixed top-10 right-[-20px] z-[120] w-14 h-14 rounded-full btn-3d-green group"
+                title="فتح القائمة"
+              >
+                <div className="flex items-center pr-4">
+                  <Menu size={26} className="transition-transform group-hover:scale-110" />
+                </div>
+              </button>
+            )}
+          </div>
 
           <main className={`flex-1 min-w-0 bg-[#f8fafc] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${activeSectionTab === 'raise' ? 'lg:pr-0 overflow-hidden h-screen' : (isDesktopSidebarOpen ? 'lg:pr-[300px]' : 'lg:pr-0 w-full max-w-[100vw]')}`}>
             <div className={`w-full p-4 md:p-6 lg:p-8 space-y-6 ${activeSectionTab === 'raise' ? 'hidden sm:block opacity-20 pointer-events-none grayscale' : ''} ${!isDesktopSidebarOpen ? 'lg:pr-[5rem]' : ''}`}>
