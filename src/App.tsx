@@ -758,7 +758,7 @@ export default function App() {
             'هنالك اشعار عمل جديد في المجمع',
             `قسم: ${sectionName} | مقدم الطلب: ${r.submitterName}`
           );
-          
+
           // إظهار النافذة الجانبية تلقائياً لمدة 3 ثوانٍ إذا كانت مخفية
           if (!isDesktopSidebarOpen) {
             setIsDesktopSidebarOpen(true);
