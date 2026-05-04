@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { User, Lock, Eye, EyeOff, ArrowLeft, MessageCircle, Activity, Clock, Layers, Bell, BellOff, Download, Trash2, Menu, X, Pen, Building, LayoutDashboard, Wrench, Users, Settings, LogOut, ShieldCheck } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ArrowLeft, MessageCircle, Activity, Clock, Layers, Bell, BellOff, Download, Trash2, Menu, X, Pen, Building, LayoutDashboard, Wrench, Users, Settings, LogOut, ShieldCheck, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 import {
@@ -199,30 +199,29 @@ const SectionStats = ({
   }, [requests, activeSection, userUnits, userRole, currentYear, currentMonth]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-10 rtl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-2 rtl">
       {stats.map((s, idx) => (
         <motion.div
           key={idx}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.1 }}
+          transition={{ delay: idx * 0.05 }}
           className="relative group"
         >
           {s.pulse && (
-            <div className={`absolute top-2 left-2 w-3 h-3 rounded-full bg-red-500 animate-ping z-20`}></div>
+            <div className={`absolute top-1 left-1 w-2 h-2 rounded-full bg-red-500 animate-ping z-20`}></div>
           )}
-          <div className="bg-white p-6 rounded-[2.2rem] shadow-sm border border-gray-100 hover:border-[#1a5e1a]/20 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1 overflow-hidden relative group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-gray-50/50">
-            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${s.color} opacity-[0.03] -mr-8 -mt-8 rounded-full transition-transform group-hover:scale-150`}></div>
-            <div className="flex flex-col items-center gap-4 relative z-10 text-center">
-              <div className={`w-14 h-14 bg-gradient-to-br ${s.color} text-white rounded-[1.2rem] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:rotate-12 group-hover:scale-110`}>
-                {React.cloneElement(s.icon as any, { size: 28, strokeWidth: 2.5 })}
+          <div className="bg-white p-3 rounded-[1.5rem] shadow-sm border border-gray-100 hover:border-[#1a5e1a]/20 transition-all hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 overflow-hidden relative group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-gray-50/50">
+            <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${s.color} opacity-[0.03] -mr-6 -mt-6 rounded-full transition-transform group-hover:scale-150`}></div>
+            <div className="flex flex-col items-center gap-2 relative z-10 text-center">
+              <div className={`w-10 h-10 bg-gradient-to-br ${s.color} text-white rounded-[0.8rem] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:rotate-12 group-hover:scale-110`}>
+                {React.cloneElement(s.icon as any, { size: 20, strokeWidth: 2.5 })}
               </div>
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-black text-gray-400 leading-tight h-8 flex items-center justify-center uppercase tracking-tighter px-1">{s.title}</p>
+              <div className="space-y-0.5">
+                <p className="text-[9px] font-black text-gray-400 leading-tight h-6 flex items-center justify-center uppercase tracking-tighter px-1">{s.title}</p>
                 <div className="flex items-baseline justify-center">
-                  <h4 className="text-3xl font-black text-gray-900 tracking-tighter">{s.count}</h4>
+                  <h4 className="text-xl font-black text-gray-900 tracking-tighter">{s.count}</h4>
                 </div>
-
               </div>
             </div>
           </div>
@@ -1808,9 +1807,9 @@ export default function App() {
                 {/* Sub-windows (Active Content) */}
                 {activeSection !== 'dashboard' && (
                   <div className={`absolute inset-x-0 -top-4 z-40 animate-in zoom-in-95 fade-in duration-500 ${activeSectionTab === 'raise' ? 'hidden' : ''}`}>
-                    <div className="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-white shadow-lg sticky top-0 md:top-4 z-50">
+                    <div className="flex items-center justify-between mb-3 bg-gradient-to-r from-[#1a5e1a] to-[#0a2e0a] p-3 rounded-2xl border border-white/20 shadow-xl sticky top-0 md:top-4 z-50 px-6">
                       <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-black text-gray-800 pr-2">
+                        <h2 className="text-lg font-black text-white pr-2">
                           {activeSection === 'users' ? 'إدارة المستخدمين' :
                             activeSection === 'settings' ? 'إعدادات النظام' :
                               `قسم ${sections.find(s => s.id === activeSection)?.name}`}
@@ -1818,14 +1817,14 @@ export default function App() {
                       </div>
                       <button
                         onClick={() => setActiveSection('dashboard')}
-                        className="flex items-center gap-2 px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold transition-all shadow-sm border border-red-100"
+                        className="flex items-center gap-2 px-5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all shadow-sm border border-white/10 text-sm group"
                       >
                         <span>رجوع للرئيسية</span>
-                        <ArrowLeft size={18} className="rotate-180" />
+                        <ArrowLeft size={16} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
                       </button>
                     </div>
 
-                    <div className="bg-white/95 backdrop-blur-sm rounded-[3rem] shadow-2xl border-2 border-white p-6 md:p-10 mb-20 min-h-[60vh]">
+                    <div className="bg-white/95 backdrop-blur-sm rounded-[2rem] shadow-2xl border-2 border-white p-4 md:p-6 mb-20 min-h-[60vh]">
                       {/* Content for different sub-sections */}
                       {activeSection === 'users' && users.find(u => u.username === username)?.role === 'admin' && (
                         <div className="space-y-8">
@@ -2297,7 +2296,7 @@ export default function App() {
                       )}
 
                       {activeSection !== 'dashboard' && activeSection !== 'users' && activeSection !== 'settings' && (
-                        <div className={`space-y-8 animate-in fade-in duration-500 text-right ${activeSectionTab === 'raise' ? 'hidden' : ''}`}>
+                        <div className={`space-y-2 animate-in fade-in duration-500 text-right ${activeSectionTab === 'raise' ? 'hidden' : ''}`}>
                           {/* Check logic for simple users */}
                           {(() => {
                             const currentUserData = users.find(u => u.username === username);
@@ -2325,20 +2324,31 @@ export default function App() {
                             return (
                               <div className="section-content-wrapper">
                                 {/* Section Sub-Navigation */}
-                                <div className="flex justify-center md:justify-end items-center mb-8">
-                                  <div className="flex flex-wrap gap-4 p-2 bg-gray-100 rounded-2xl w-fit">
+                                <div className="flex justify-center md:justify-end items-center mb-2">
+                                  <div className="flex flex-wrap items-center gap-3 p-1.5 bg-gray-100 rounded-xl w-fit">
                                     {(userSectionPerms?.viewRequests || currentUserData?.role === 'admin') && (
                                       <button
                                         onClick={() => setActiveSectionTab('list')}
-                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'list' ? 'bg-[#1a5e1a] text-white shadow-md' : 'text-gray-600 hover:bg-gray-200'}`}
+                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'list' ? 'bg-[#1a5e1a] text-white shadow-lg' : 'bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a]'}`}
                                       >
                                         الطلبات
                                       </button>
                                     )}
+
+                                    {currentUserData?.role === 'admin' && (
+                                      <button
+                                        onClick={exportAllRequestsToExcel}
+                                        className="px-8 py-2 rounded-xl font-bold transition-all bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a] flex items-center gap-2"
+                                      >
+                                        <span>تصدير Excel</span>
+                                        <FileSpreadsheet size={18} />
+                                      </button>
+                                    )}
+
                                     {(userSectionPerms?.raiseRequest || currentUserData?.role === 'admin') && (
                                       <button
                                         onClick={() => setActiveSectionTab('raise')}
-                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'raise' ? 'bg-[#1a5e1a] text-white shadow-md' : 'text-gray-600 hover:bg-gray-200'}`}
+                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'raise' ? 'bg-[#1a5e1a] text-white shadow-lg' : 'bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a]'}`}
                                       >
                                         رفع طلب
                                       </button>
@@ -2346,13 +2356,6 @@ export default function App() {
 
                                     {currentUserData?.role === 'admin' && (
                                       <div className="flex gap-2 mr-2 border-r border-gray-300 pr-4">
-                                        <button
-                                          onClick={exportAllRequestsToExcel}
-                                          className="px-5 py-2 rounded-xl font-bold bg-[#1a5e1a] text-white hover:bg-green-800 transition-all shadow-md flex items-center gap-2"
-                                        >
-                                          <span>تصدير</span>
-                                          <Download size={18} />
-                                        </button>
                                         <button
                                           onClick={async () => {
                                             const sectionName = activeSection === 'dashboard' ? 'جميع الأقسام' : (sections.find(s => s.id === activeSection)?.name || activeSection);
@@ -2406,9 +2409,9 @@ export default function App() {
                                 />
 
                                 <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 animate-in fade-in duration-500">
-                                  <div className="p-6 bg-gray-50 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-4">
-                                    <h3 className="text-xl font-black text-gray-800 shrink-0">بيانات طلبات الصيانة - مجمع {sections.find(s => s.id === activeSection)?.name}</h3>
-                                    <div className="flex flex-wrap gap-4 items-center justify-end w-full">
+                                  <div className="py-1 px-4 bg-gray-50 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-2">
+                                    <h3 className="text-base font-black text-gray-800 shrink-0">بيانات طلبات الصيانة - مجمع {sections.find(s => s.id === activeSection)?.name}</h3>
+                                    <div className="flex flex-wrap gap-2 items-center justify-end w-full">
                                       {/* Search Input */}
                                       <div className="relative">
                                         <input
@@ -2471,19 +2474,7 @@ export default function App() {
                                         )}
                                       </div>
 
-                                      <div className="h-8 w-px bg-gray-200 hidden xl:block"></div>
 
-                                      {(userSectionPerms?.exportReports || currentUserData?.role === 'admin') && (
-                                        <div className="flex gap-2">
-                                          <button
-                                            onClick={() => handleExportData('excel')}
-                                            className="bg-green-600 text-white px-5 py-2 rounded-xl text-[10px] font-black shadow-md hover:bg-green-700 transition-all flex items-center gap-2"
-                                          >
-                                            <Download size={14} />
-                                            تصدير Excel
-                                          </button>
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
 
