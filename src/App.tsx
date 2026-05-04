@@ -1378,7 +1378,7 @@ export default function App() {
               </div>
               <div className="text-right">
                 <h1 className="text-sm font-black tracking-tight text-white">اسناد الصيانة الهندسي</h1>
-                <p className="text-[8px] font-bold opacity-60">نظام إدارة صيانة مجمع العميد</p>
+                <p className="text-[8px] font-bold opacity-60">نظام إدارة صيانة مجموعة العميد</p>
               </div>
             </div>
             <button
