@@ -68,6 +68,56 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+const MultiSelectDropdown = ({ options, name, placeholder }: { options: string[], name: string, placeholder?: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleOption = (opt: string) => {
+    setSelected(prev => prev.includes(opt) ? prev.filter(o => o !== opt) : [...prev, opt]);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 cursor-pointer flex flex-wrap gap-2 items-center min-h-[60px] text-base md:text-lg font-bold text-gray-900 shadow-sm"
+      >
+        {selected.length === 0 ? <span className="text-gray-400 font-bold text-base">{placeholder || 'إختر من القائمة المتاحة...'}</span> :
+          selected.map(s => (
+            <span key={s} className="bg-[#1a5e1a]/10 text-[#1a5e1a] px-3 py-1.5 rounded-lg text-sm font-black flex items-center gap-2" onClick={(e) => { e.stopPropagation(); toggleOption(s); }}>
+              {s} <X size={14} className="hover:text-red-500 transition-colors" />
+            </span>
+          ))
+        }
+      </div>
+      {/* Hidden input for native FormData parsing */}
+      {selected.map(s => <input type="hidden" name={name} value={s} key={s} />)}
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl z-50 max-h-60 overflow-y-auto p-2 space-y-1">
+          {options.map(opt => (
+            <label key={opt} className="flex items-center gap-3 p-3 hover:bg-[#1a5e1a]/5 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-[#1a5e1a]/10">
+              <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggleOption(opt)} className="w-5 h-5 accent-[#1a5e1a]" />
+              <span className="font-bold text-gray-700">{opt}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Statistics Component for Sections
 const SectionStats = ({
   requests,
@@ -947,10 +997,18 @@ export default function App() {
   };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktopSidebarOpen, setIsDesktopSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('الكل');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, startDate, endDate, filterStatus, activeSection]);
 
   const filteredRequests = useMemo(() => {
     // Advanced Arabic Normalization for "Fuzzy" matching
@@ -1003,6 +1061,13 @@ export default function App() {
   }, [requests, activeSection, startDate, endDate, filterStatus, searchTerm]);
 
   const getFilteredRequests = () => filteredRequests;
+
+  const paginatedRequests = useMemo(() => {
+    const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredRequests.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  }, [filteredRequests, currentPage]);
+
+  const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
 
   const exportToExcel = (data: any[], fileName: string) => {
     const sectionNames = sections.reduce((acc, s) => ({ ...acc, [s.id]: s.name }), {} as any);
@@ -1089,11 +1154,21 @@ export default function App() {
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const answers: any = {};
     activeSectionData.questions.forEach(q => {
-      if (q.type === 'checkbox') {
-        answers[q.id] = formData.getAll(q.id).join(' - ');
+      let mainAnswer = '';
+      if (q.type === 'checkbox' || q.type === 'dropdown') {
+        mainAnswer = formData.getAll(q.id).join(' - ');
       } else {
-        answers[q.id] = formData.get(q.id);
+        mainAnswer = formData.get(q.id) as string || '';
       }
+
+      if ((q as any).allowAdditionalText && (q.type === 'dropdown' || q.type === 'checkbox')) {
+        const additionalText = formData.get(`${q.id}_additional`) as string || '';
+        if (additionalText) {
+          mainAnswer = mainAnswer ? `${mainAnswer} - ${additionalText}` : additionalText;
+        }
+      }
+
+      answers[q.id] = mainAnswer;
     });
 
     const currentUserData = users.find(u => u.username === username);
@@ -1404,7 +1479,7 @@ export default function App() {
 
           {/* Sidebar */}
           <aside
-            className={`fixed lg:fixed top-0 right-0 h-screen w-[300px] bg-gradient-to-b from-[#1a5e1a] to-[rgba(0,0,0,0.98)] text-white p-6 flex flex-col z-[110] shadow-[10px_0_50px_rgba(0,0,0,0.3)] transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} border-l border-white/10 overflow-y-auto shrink-0 backdrop-blur-[20px] ${activeSectionTab === 'raise' ? 'hidden' : ''}`}
+            className={`fixed lg:fixed top-0 right-0 h-screen w-[300px] bg-gradient-to-b from-[#1a5e1a] to-[rgba(0,0,0,0.98)] text-white p-6 flex flex-col z-[110] shadow-[10px_0_50px_rgba(0,0,0,0.3)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} ${isDesktopSidebarOpen ? 'lg:translate-x-0 lg:opacity-100' : 'lg:translate-x-full lg:opacity-0 lg:pointer-events-none'} border-l border-white/10 overflow-y-auto shrink-0 backdrop-blur-[20px] ${activeSectionTab === 'raise' ? 'hidden' : ''}`}
           >
             {/* Sidebar Header - تقليل الهامش السفلي mb-10 إلى mb-6 */}
             <div className="sidebar-header text-center mb-6 relative cursor-pointer" onClick={() => { setActiveSection('dashboard'); setIsSidebarOpen(false); }}>
@@ -1519,8 +1594,17 @@ export default function App() {
             </div>
           </aside>
 
-          <main className={`flex-1 min-w-0 bg-[#f8fafc] transition-all duration-300 ${activeSectionTab === 'raise' ? 'lg:pr-0 overflow-hidden h-screen' : 'lg:pr-[320px]'}`}>
-            <div className={`max-w-7xl mx-auto p-4 md:p-6 lg:p-8 space-y-6 ${activeSectionTab === 'raise' ? 'hidden sm:block opacity-20 pointer-events-none grayscale' : ''}`}>
+          {/* Desktop Sidebar Toggle Button */}
+          <button
+            onClick={() => setIsDesktopSidebarOpen(!isDesktopSidebarOpen)}
+            className={`hidden lg:flex fixed top-6 z-[120] items-center justify-center w-12 h-12 bg-white text-[#1a5e1a] rounded-[1.2rem] shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-gray-100 hover:bg-[#1a5e1a] hover:text-white hover:scale-110 hover:-translate-y-1 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isDesktopSidebarOpen ? 'right-[320px]' : 'right-6'} group`}
+            title={isDesktopSidebarOpen ? 'إخفاء القائمة الجانبية لتوسيع الشاشة' : 'إظهار القائمة الجانبية'}
+          >
+            <Menu size={22} className="group-hover:rotate-180 transition-transform duration-500" />
+          </button>
+
+          <main className={`flex-1 min-w-0 bg-[#f8fafc] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${activeSectionTab === 'raise' ? 'lg:pr-0 overflow-hidden h-screen' : (isDesktopSidebarOpen ? 'lg:pr-[300px]' : 'lg:pr-0 w-full max-w-[100vw]')}`}>
+            <div className={`w-full p-4 md:p-6 lg:p-8 space-y-6 ${activeSectionTab === 'raise' ? 'hidden sm:block opacity-20 pointer-events-none grayscale' : ''} ${!isDesktopSidebarOpen ? 'lg:pr-[5rem]' : ''}`}>
 
               {/* Professional Header Section - Optimized & Compact */}
               {activeSection === 'dashboard' && (
@@ -2378,131 +2462,141 @@ export default function App() {
                                   </div>
 
                                   {/* Desktop View */}
-                                  <div className="hidden md:block overflow-x-auto">
+                                  <div className="hidden md:block overflow-auto max-h-[65vh] shadow-inner relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-50">
                                     <table className="w-full text-[13px] text-right border-collapse whitespace-nowrap">
-                                      <thead>
+                                      <thead className="sticky top-0 z-20 shadow-md">
                                         <tr className="bg-[#1a5e1a] text-white">
-                                          <th className="p-4 font-black border-l border-white/10 uppercase tracking-tighter">ID</th>
-                                          <th className="p-4 font-black border-l border-white/10">وقت الرفع</th>
-                                          <th className="p-4 font-black border-l border-white/10">المجمع</th>
-                                          <th className="p-4 font-black border-l border-white/10">مقدم الطلب</th>
-                                          <th className="p-4 font-black border-l border-white/10">القسم</th>
+                                          <th className="p-4 font-black border-l border-white/10 uppercase tracking-tighter w-16 text-center">ID</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-24 text-center">وقت الرفع</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">المجمع</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">مقدم الطلب</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">القسم</th>
                                           {/* Dynamic Question Columns */}
                                           {sections.find(s => s.id === activeSection)?.questions.map(q => (
-                                            <th key={q.id} className="p-4 font-black border-l border-white/10">{q.title}</th>
+                                            <th key={q.id} className="p-4 font-black border-l border-white/10 min-w-[150px]">{q.title}</th>
                                           ))}
-                                          <th className="p-4 font-black border-l border-white/10">الوحدة المكلفة</th>
-                                          <th className="p-4 font-black border-l border-white/10">حالة العمل</th>
-                                          <th className="p-4 font-black border-l border-white/10">وقت الإنجاز</th>
-                                          <th className="p-4 font-black border-l border-white/10">ملاحظات الشعبة</th>
-                                          <th className="p-4 font-black">آخر إرسال</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">الوحدة المكلفة</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">حالة العمل</th>
+                                          <th className="p-4 font-black border-l border-white/10 w-24 text-center">وقت الإنجاز</th>
+                                          <th className="p-4 font-black border-l border-white/10 min-w-[150px]">ملاحظات الشعبة</th>
+                                          <th className="p-4 font-black w-24 text-center">آخر إرسال</th>
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {getFilteredRequests().map(req => (
+                                        {paginatedRequests.map(req => (
                                           <tr key={req.id} className={`hover:bg-gray-50 border-b border-gray-100 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'bg-red-50/50' : ''}`}>
-                                            <td className="p-4 font-black text-gray-500 border-l border-gray-50 group-hover:bg-green-50/30 transition-colors">
-                                              <div className="flex items-center gap-2">
+                                            <td className="p-4 font-black text-gray-500 border-l border-gray-50 group-hover:bg-green-50/30 transition-colors align-top w-16 text-center">
+                                              <div className="flex items-center justify-center gap-1.5">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-[#1a5e1a] animate-pulse"></div>
-                                                <span className="bg-gray-100 px-2 py-0.5 rounded-md shadow-sm border border-gray-200">#{req.id}</span>
+                                                <span className="bg-gray-100 px-2 py-0.5 rounded-md shadow-sm border border-gray-200">{req.id}</span>
                                               </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-600">
+                                            <td className="p-4 font-black text-gray-600 align-top w-24 text-center">
                                               {req.timestamp.toLocaleDateString('ar-EG')} <br />
                                               <span className="text-[11px] opacity-70">{req.timestamp.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
                                             </td>
-                                            <td className="p-4 font-black text-[#1a5e1a]">
-                                              {sections.find(s => s.id === req.sectionId)?.name}
+                                            <td className="p-4 font-black text-[#1a5e1a] align-top w-28 text-center">
+                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                                {sections.find(s => s.id === req.sectionId)?.name}
+                                              </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-900">{req.submitterName}</td>
-                                            <td className="p-4 text-gray-700 font-extrabold">{req.submitterDept}</td>
+                                            <td className="p-4 font-black text-gray-900 align-top w-28 text-center">
+                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                                {req.submitterName}
+                                              </div>
+                                            </td>
+                                            <td className="p-4 text-gray-700 font-extrabold align-top w-28 text-center">
+                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                                {req.submitterDept}
+                                              </div>
+                                            </td>
 
                                             {/* Dynamic Answer Columns */}
                                             {sections.find(s => s.id === activeSection)?.questions.map(q => (
-                                              <td key={q.id} className="p-4 max-w-[200px] overflow-hidden truncate font-bold text-gray-800">
-                                                {req.answers[q.id] || '-'}
+                                              <td key={q.id} className="p-4 min-w-[150px] font-bold text-gray-800 align-top">
+                                                <div className="line-clamp-3 text-[11px] whitespace-normal leading-relaxed text-justify">
+                                                  {req.answers[q.id] || '-'}
+                                                </div>
                                               </td>
                                             ))}
 
-                                            <td className="p-4">
-                                              <span className={`font-black px-4 py-1.5 rounded-full text-[12px] ${req.assignedUnit ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                            <td className="p-4 align-top w-28 text-center">
+                                              <span className={`font-black px-2 py-1 block w-full whitespace-normal leading-tight rounded-xl text-[10px] ${req.assignedUnit ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
                                                 {req.assignedUnit || 'بانتظار التوزيع'}
                                               </span>
                                             </td>
-                                            <td className="p-4 whitespace-nowrap">
-                                              <div className={`flex items-center gap-2 font-black text-[13px] ${req.status === 'منجز' ? 'text-green-600' : 'text-red-500 animate-pulse'}`}>
+                                            <td className="p-4 align-top w-28 text-center">
+                                              <div className={`flex flex-col items-center justify-center font-black text-[11px] whitespace-normal leading-tight ${req.status === 'منجز' ? 'text-green-600' : 'text-red-500 animate-pulse'}`}>
                                                 {req.status ? (
                                                   <>
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-600"></div>
-                                                    {req.status}
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-600 mb-1"></div>
+                                                    <span className="text-center">{req.status}</span>
                                                   </>
                                                 ) : (
                                                   <>
-                                                    <div className="w-2.5 h-2.5 rounded-full bg-red-600"></div>
-                                                    بانتظار المعالجة
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-red-600 mb-1"></div>
+                                                    <span className="text-center">بانتظار المعالجة</span>
                                                   </>
                                                 )}
                                               </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-600">
-                                              {req.completionTime ? req.completionTime.toLocaleString('ar-EG') : '-'}
+                                            <td className="p-4 font-black text-gray-600 align-top w-24 text-center">
+                                              {req.completionTime ? (
+                                                <div className="whitespace-normal leading-tight">
+                                                  <span>{req.completionTime.toLocaleDateString('ar-EG')}</span><br />
+                                                  <span className="text-[10px] opacity-70">{req.completionTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
+                                              ) : '-'}
                                             </td>
-                                            <td className="p-4 text-gray-500 text-[12px] font-bold italic max-w-[150px] truncate">
-                                              {req.sectionNotes || 'لا توجد ملاحظات...'}
+                                            <td className="p-4 text-gray-500 text-[12px] font-bold italic min-w-[150px] align-top">
+                                              <div className="line-clamp-3 text-[11px] whitespace-normal leading-relaxed text-justify">
+                                                {req.sectionNotes || 'لا توجد ملاحظات...'}
+                                              </div>
                                             </td>
-                                            <td className="p-4">
-                                              <div className="flex items-center gap-2">
-                                                {(userSectionPerms?.editWorkStatus || userSectionPerms?.editAssignedUnit || userSectionPerms?.editDeptNotes || userSectionPerms?.editRequestDetails || currentUserData?.role === 'admin' || (userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))) && (
-                                                  <button
-                                                    onClick={() => setEditingRequest(req)}
-                                                    className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100 group"
-                                                  >
-                                                    {userSectionPerms?.viewRequests &&
-                                                      currentUserData?.role !== 'admin' &&
-                                                      !userSectionPerms?.editWorkStatus &&
-                                                      !userSectionPerms?.editAssignedUnit &&
-                                                      !userSectionPerms?.editDeptNotes &&
-                                                      !userSectionPerms?.editRequestDetails &&
-                                                      !(userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))
-                                                      ? <Eye size={18} />
-                                                      : <span className="group-hover:scale-110 transition-transform block">✏️</span>}
-                                                  </button>
-                                                )}
-                                                <div className="flex items-center gap-2">
-                                                  <div className="flex flex-col items-end gap-0.5">
-                                                    {req.lastSentRecipients && req.lastSentRecipients.length > 1 ? (
-                                                      <div className="relative group cursor-help">
-                                                        <span className="font-black text-gray-800 underline decoration-dotted decoration-green-500">مستلمون متعددون</span>
-                                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-[150] bg-white border-2 border-green-500 p-3 rounded-2xl shadow-2xl min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
-                                                          <div className="text-[11px] font-black text-green-600 mb-2 border-b border-green-100 pb-1">قائمة المستلمين:</div>
-                                                          {req.lastSentRecipients.map((name: string, i: number) => (
-                                                            <div key={i} className="text-[12px] font-bold text-gray-700 py-1 border-b border-gray-50 last:border-0 flex items-center gap-2">
-                                                              <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                                                              {name}
-                                                            </div>
-                                                          ))}
-                                                        </div>
-                                                      </div>
-                                                    ) : (
-                                                      <span className="font-black text-gray-800 text-[13px]">
-                                                        {req.lastSentRecipients?.[0] || req.lastSent?.split('-')[0]?.replace('whatsapp:', '')?.split('(')[0]?.trim() || 'لم يرسل'}
-                                                      </span>
-                                                    )}
-                                                    {(req.lastSentDate || req.lastSent) && (
-                                                      <span className="text-[11px] text-gray-400 font-bold italic">
-                                                        {req.lastSentDate
-                                                          ? req.lastSentDate.toLocaleDateString('ar-EG')
-                                                          : (req.lastSent?.includes('(') ? req.lastSent.split('(')[1].split(')')[0] : (req.lastSent?.split('-').pop()?.trim() || ''))}
-                                                      </span>
-                                                    )}
-                                                  </div>
+                                            <td className="p-4 align-top w-24 text-center">
+                                              <div className="flex flex-col items-center gap-2">
+                                                <div className="flex items-center justify-center gap-2 w-full">
+                                                  {(userSectionPerms?.editWorkStatus || userSectionPerms?.editAssignedUnit || userSectionPerms?.editDeptNotes || userSectionPerms?.editRequestDetails || currentUserData?.role === 'admin' || (userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))) && (
+                                                    <button
+                                                      onClick={() => setEditingRequest(req)}
+                                                      className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group"
+                                                      title="تعديل أو عرض"
+                                                    >
+                                                      {userSectionPerms?.viewRequests &&
+                                                        currentUserData?.role !== 'admin' &&
+                                                        !userSectionPerms?.editWorkStatus &&
+                                                        !userSectionPerms?.editAssignedUnit &&
+                                                        !userSectionPerms?.editDeptNotes &&
+                                                        !userSectionPerms?.editRequestDetails &&
+                                                        !(userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))
+                                                        ? <Eye size={14} />
+                                                        : <Pen size={14} className="group-hover:rotate-12 transition-transform" />}
+                                                    </button>
+                                                  )}
                                                   <button
                                                     onClick={() => setWhatsappModal({ isOpen: true, request: req })}
-                                                    className="text-green-600 hover:scale-125 transition-all text-lg p-1 hover:bg-green-50 rounded-lg"
-                                                    title="إرسال إشعار جديد"
+                                                    className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white rounded-lg shadow-[0_4px_10px_rgba(37,211,102,0.3)] hover:shadow-[0_6px_15px_rgba(37,211,102,0.5)] hover:-translate-y-0.5 transition-all duration-300 group"
+                                                    title="إرسال إشعار عبر واتساب"
                                                   >
-                                                    📲
+                                                    <MessageCircle size={16} className="group-hover:scale-110 transition-transform" />
                                                   </button>
+                                                </div>
+                                                <div className="flex flex-col items-center gap-0.5 mt-1 bg-gray-50/80 w-full py-1.5 rounded-lg border border-gray-100">
+                                                  <span className="font-black text-gray-800 text-[10px] whitespace-normal leading-tight line-clamp-2 px-1">
+                                                    {req.lastSentRecipients?.[0] || req.lastSent?.split('-')[0]?.replace('whatsapp:', '')?.split('(')[0]?.trim() || 'لم يرسل'}
+                                                  </span>
+                                                  {(req.lastSentDate || req.lastSent) && (
+                                                    <span className="text-[9px] text-gray-500 font-bold tracking-tighter">
+                                                      {req.lastSentDate
+                                                        ? (
+                                                          <>
+                                                            {req.lastSentDate.toLocaleDateString('ar-EG')} <br />
+                                                            <span className="opacity-80">{req.lastSentDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                          </>
+                                                        )
+                                                        : (req.lastSent?.includes('(') ? req.lastSent.split('(')[1].split(')')[0] : (req.lastSent?.split('-').pop()?.trim() || ''))}
+                                                    </span>
+                                                  )}
                                                 </div>
                                               </div>
                                             </td>
@@ -2514,7 +2608,7 @@ export default function App() {
 
                                   {/* Mobile View */}
                                   <div className="md:hidden divide-y divide-gray-100 text-right">
-                                    {getFilteredRequests().map(req => (
+                                    {paginatedRequests.map(req => (
                                       <div key={req.id} className={`p-6 space-y-4 hover:bg-gray-50 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'bg-red-50/30' : ''}`}>
                                         <div className="flex justify-between items-start">
                                           <div className="flex items-center gap-3">
@@ -2565,6 +2659,57 @@ export default function App() {
                                       </div>
                                     ))}
                                   </div>
+
+                                  {/* Pagination Controls */}
+                                  {totalPages > 1 && (
+                                    <div className="p-6 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-50/80 rounded-b-[2rem]">
+                                      <div className="text-sm font-bold text-gray-500 text-center md:text-right">
+                                        عرض {((currentPage - 1) * ITEMS_PER_PAGE) + 1} إلى {Math.min(currentPage * ITEMS_PER_PAGE, filteredRequests.length)} من إجمالي {filteredRequests.length} طلب
+                                      </div>
+                                      <div className="flex items-center gap-2 flex-wrap justify-center">
+                                        <button
+                                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                          disabled={currentPage === 1}
+                                          className="px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-[#1a5e1a] hover:text-white hover:border-[#1a5e1a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                        >
+                                          السابق
+                                        </button>
+
+                                        <div className="flex items-center gap-1">
+                                          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum;
+                                            if (totalPages <= 5) {
+                                              pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                              pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                              pageNum = totalPages - 4 + i;
+                                            } else {
+                                              pageNum = currentPage - 2 + i;
+                                            }
+
+                                            return (
+                                              <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`w-10 h-10 rounded-xl font-black transition-all ${currentPage === pageNum ? 'bg-[#1a5e1a] text-white shadow-md scale-110' : 'bg-white text-gray-600 border border-gray-200 hover:border-[#1a5e1a] hover:text-[#1a5e1a]'}`}
+                                              >
+                                                {pageNum}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        <button
+                                          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                          disabled={currentPage === totalPages}
+                                          className="px-4 py-2 bg-white border border-gray-200 rounded-xl font-bold text-gray-600 hover:bg-[#1a5e1a] hover:text-white hover:border-[#1a5e1a] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                                        >
+                                          التالي
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -2660,45 +2805,46 @@ export default function App() {
                               <textarea
                                 name={q.id}
                                 required={q.required}
-                                rows={4}
+                                rows={2}
                                 placeholder={`اكتب تفاصيل ${q.title} هنا بوضوح لتسهيل عملية الصيانة...`}
-                                className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 focus:border-[#1a5e1a] focus:bg-white focus:ring-8 focus:ring-[#1a5e1a]/5 focus:outline-none transition-all font-bold text-gray-900 shadow-sm resize-none placeholder:text-gray-300 text-base md:text-lg"
+                                className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 focus:border-[#1a5e1a] focus:bg-white focus:ring-8 focus:ring-[#1a5e1a]/5 focus:outline-none transition-all font-bold text-gray-900 shadow-sm resize-y max-h-[150px] overflow-y-auto placeholder:text-gray-300 text-base md:text-lg"
                               ></textarea>
                             )}
 
                             {q.type === 'dropdown' && (
-                              <div className="relative">
-                                <select
-                                  name={q.id}
-                                  required={q.required}
-                                  className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 focus:border-[#1a5e1a] focus:bg-white focus:ring-8 focus:ring-[#1a5e1a]/5 focus:outline-none appearance-none cursor-pointer font-bold text-gray-900 shadow-sm text-base md:text-lg"
-                                >
-                                  <option value="">إختر من القائمة المتاحة...</option>
-                                  {q.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                                <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                  <ArrowLeft size={20} className="-rotate-90 opacity-40" />
-                                </div>
-                              </div>
+                              <MultiSelectDropdown
+                                options={q.options || []}
+                                name={q.id}
+                                placeholder="إختر من القائمة المتاحة..."
+                              />
                             )}
 
                             {q.type === 'checkbox' && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2">
+                              <div className="flex flex-wrap gap-3 p-2">
                                 {q.options?.map(opt => (
-                                  <label key={opt} className="relative flex items-center p-4 rounded-2xl border-2 border-gray-100 hover:border-[#1a5e1a]/30 cursor-pointer transition-all bg-white group/opt has-[:checked]:border-[#1a5e1a] has-[:checked]:bg-[#1a5e1a]/5 shadow-sm">
+                                  <label key={opt} className="relative flex items-center p-3 rounded-2xl border-2 border-gray-100 hover:border-[#1a5e1a]/30 cursor-pointer transition-all bg-white group/opt has-[:checked]:border-[#1a5e1a] has-[:checked]:bg-[#1a5e1a]/5 shadow-sm">
                                     <input
                                       name={q.id}
                                       value={opt}
                                       type="checkbox"
                                       className="peer w-6 h-6 opacity-0 absolute"
                                     />
-                                    <div className="w-6 h-6 border-2 border-gray-200 rounded-lg peer-checked:bg-[#1a5e1a] peer-checked:border-[#1a5e1a] transition-all flex items-center justify-center shrink-0">
+                                    <div className="w-5 h-5 border-2 border-gray-200 rounded-lg peer-checked:bg-[#1a5e1a] peer-checked:border-[#1a5e1a] transition-all flex items-center justify-center shrink-0">
                                       <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
                                     </div>
-                                    <span className="font-bold text-base text-gray-700 pr-4 peer-checked:text-[#1a5e1a] transition-colors">{opt}</span>
+                                    <span className="font-bold text-sm text-gray-700 pr-3 peer-checked:text-[#1a5e1a] transition-colors">{opt}</span>
                                   </label>
                                 ))}
                               </div>
+                            )}
+
+                            {((q as any).allowAdditionalText && (q.type === 'dropdown' || q.type === 'checkbox')) && (
+                              <input
+                                type="text"
+                                name={`${q.id}_additional`}
+                                placeholder="نص يدوي إضافي (أخرى)..."
+                                className="w-full mt-2 px-5 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 focus:border-[#1a5e1a] focus:bg-white focus:outline-none transition-all font-bold text-gray-800 text-sm placeholder:text-gray-400"
+                              />
                             )}
                           </div>
                         ))}
@@ -2875,6 +3021,22 @@ export default function App() {
                               />
                               <span className="text-xs font-black text-red-600">إلزامي</span>
                             </label>
+
+                            {(q.type === 'dropdown' || q.type === 'checkbox') && (
+                              <label className="flex items-center gap-2 cursor-pointer mt-4">
+                                <input
+                                  type="checkbox"
+                                  checked={(q as any).allowAdditionalText || false}
+                                  onChange={e => {
+                                    const newQs = [...sectionForm.questions];
+                                    (newQs[idx] as any).allowAdditionalText = e.target.checked;
+                                    setSectionForm({ ...sectionForm, questions: newQs });
+                                  }}
+                                  className="w-5 h-5 accent-blue-500"
+                                />
+                                <span className="text-xs font-black text-blue-600">نص يدوي إضافي</span>
+                              </label>
+                            )}
                             <button
                               type="button"
                               onClick={() => {
@@ -3002,14 +3164,14 @@ export default function App() {
                         {sections.find(s => s.id === editingRequest.sectionId)?.questions.map(q => (
                           <div key={q.id} className="space-y-2">
                             <label className="text-[13px] font-black text-blue-900/60 pr-2 uppercase tracking-tighter">{q.title}</label>
-                            <input
-                              type="text"
+                            <textarea
                               value={editingRequest.answers[q.id] || ''}
                               onChange={e => setEditingRequest({
                                 ...editingRequest,
                                 answers: { ...editingRequest.answers, [q.id]: e.target.value }
                               })}
-                              className="w-full px-5 py-3.5 bg-white rounded-xl border border-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 font-bold text-sm shadow-sm transition-all outline-none"
+                              rows={(editingRequest.answers[q.id] || '').length > 50 ? 3 : 1}
+                              className="w-full px-5 py-3.5 bg-white rounded-xl border border-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 font-bold text-[12px] leading-relaxed shadow-sm transition-all outline-none resize-y max-h-32 overflow-y-auto whitespace-normal"
                             />
                           </div>
                         ))}
