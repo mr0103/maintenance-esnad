@@ -289,6 +289,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
   const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const isRequestsInitialized = useRef(false);
 
   // Notifications State & Logic
@@ -399,7 +400,7 @@ export default function App() {
       // Use a small timeout to ensure DOM is ready and any animations are complete
       const timer = setTimeout(() => {
         usernameRef.current?.focus();
-      }, 300);
+      }, 50);
       return () => clearTimeout(timer);
     }
   }, [isLoggedIn, checkingSession]);
@@ -1341,20 +1342,12 @@ export default function App() {
       };
       localStorage.setItem('engineeringLogin', JSON.stringify(loginData));
 
-      // Redirect non-admins to their first allowed section if they don't have access to the current activeSection
-      if (sections.length > 0 && foundUser.permissions) {
-        const firstAllowed = sections.find(s => foundUser.permissions?.[s.id]?.access);
-        if (firstAllowed) {
-          setActiveSection(firstAllowed.id);
-        } else {
-          // If no sections allowed, maybe just show a restricted view or logout
-          setActiveSection('restricted');
-        }
-      }
+      // Always redirect to dashboard upon login
+      setActiveSection('dashboard');
     } else {
       setError(true);
       setPassword('');
-      if (usernameRef.current) usernameRef.current.focus();
+      if (passwordRef.current) passwordRef.current.focus();
 
       // Hide error after 3 seconds
       setTimeout(() => setError(false), 3000);
@@ -1411,34 +1404,40 @@ export default function App() {
 
           {/* Sidebar */}
           <aside
-            className={`fixed lg:fixed top-0 right-0 h-screen w-[300px] bg-gradient-to-b from-[#1a5e1a] to-[rgba(0,0,0,0.98)] text-white p-8 flex flex-col z-[110] shadow-[10px_0_50px_rgba(0,0,0,0.3)] transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} border-l border-white/10 overflow-y-auto shrink-0 backdrop-blur-[20px] ${activeSectionTab === 'raise' ? 'hidden' : ''}`}
+            className={`fixed lg:fixed top-0 right-0 h-screen w-[300px] bg-gradient-to-b from-[#1a5e1a] to-[rgba(0,0,0,0.98)] text-white p-6 flex flex-col z-[110] shadow-[10px_0_50px_rgba(0,0,0,0.3)] transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} border-l border-white/10 overflow-y-auto shrink-0 backdrop-blur-[20px] ${activeSectionTab === 'raise' ? 'hidden' : ''}`}
           >
-            {/* Sidebar Header - Professional Identity */}
-            <div className="sidebar-header text-center mb-10 relative cursor-pointer" onClick={() => { setActiveSection('dashboard'); setIsSidebarOpen(false); }}>
-              <div className="logo w-[120px] h-[120px] rounded-full mx-auto mb-5 overflow-hidden border-[3px] border-white/20 transition-all duration-300 hover:scale-105 hover:rotate-2 shadow-2xl">
-                <img src="https://i.ibb.co/0jpV8nXS/image.png" alt="Logo" className="w-full h-full object-contain p-2" />
+            {/* Sidebar Header - تقليل الهامش السفلي mb-10 إلى mb-6 */}
+            <div className="sidebar-header text-center mb-6 relative cursor-pointer" onClick={() => { setActiveSection('dashboard'); setIsSidebarOpen(false); }}>
+              {/* تقليل حجم اللوجو والهوامش */}
+              <div className="logo w-[100px] h-[100px] rounded-full mx-auto mb-3 overflow-hidden border-[3px] border-white/20 transition-all duration-300 hover:scale-105 hover:rotate-2 shadow-2xl">
+                <img src="https://i.ibb.co/yBmYJQ9H/image.png" alt="Logo" className="w-full h-full object-contain p-2" />
               </div>
 
-              <div className="space-y-1">
-                <h3 className="text-[1.4rem] font-black tracking-tight">العتبة العباسية</h3>
-                <p className="text-[0.95rem] font-bold opacity-90 leading-relaxed">قسم المشاريع الهندسية</p>
-                <p className="text-[0.85rem] font-bold opacity-70 leading-relaxed">شعبة صيانة مجموعة العميد</p>
-                <div className="h-px w-20 bg-gradient-to-r from-transparent via-white/30 to-transparent mx-auto my-4"></div>
+              <div className="space-y-0.5">
+                <h3 className="text-[1.3rem] font-black tracking-tight">العتبة العباسية</h3>
+                <p className="text-[0.9rem] font-bold opacity-90 leading-tight">قسم المشاريع الهندسية</p>
+                <p className="text-[0.8rem] font-bold opacity-70 leading-tight">شعبة صيانة مجموعة العميد</p>
+                <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/90 to-transparent mx-auto my-2"></div>
               </div>
             </div>
 
-            <nav className="sidebar-nav flex-1 space-y-2 scrollbar-hide">
+            <nav className="sidebar-nav flex-1 space-y-1 scrollbar-hide">
+              {/* تقليل الـ padding من py-4 إلى py-2.5 */}
               <button
                 onClick={() => { setActiveSection('dashboard'); setIsSidebarOpen(false); }}
-                className={`nav-item w-full flex items-center px-5 py-4 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'dashboard' ? 'bg-white/15 border-r-4 border-white active' : 'hover:bg-white/10 hover:-translate-x-2'}`}
+                className={`nav-item w-full flex items-center justify-start px-5 py-2.5 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'dashboard'
+                  ? 'bg-white/15 border-r-4 border-white active'
+                  : 'hover:bg-white/10 hover:translate-x-2'
+                  }`}
               >
-                <LayoutDashboard size={20} className="ml-4" />
-                <span className="text-[16px]">الرئيسية</span>
+                <LayoutDashboard size={20} className="ml-3" />
+                <span className="text-[16px] text-right">الرئيسية</span>
               </button>
 
-              <div className="py-2">
-                <p className="px-5 text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 text-right">أقسام مجمع العميد</p>
-                <div className="space-y-2">
+              <div className="py-1">
+                <p className="px-5 text-[10px] font-black text-white/70 uppercase tracking-[0.3em] mb-1 text-right">المجمعات الخاضعة لصيانة الشعبة</p>
+                <div className="space-y-1">
+                  <div className="h-px w-40 bg-gradient-to-r from-transparent via-white/70 to-transparent mx-auto my-2"></div>
                   {sections.map(section => {
                     const userData = users.find(u => u.username === username);
                     const userPerms = userData?.permissions[section.id];
@@ -1452,7 +1451,7 @@ export default function App() {
                       <button
                         key={section.id}
                         onClick={() => { setActiveSection(section.id); setIsSidebarOpen(false); }}
-                        className={`nav-item w-full flex items-center px-5 py-4 rounded-[10px] transition-all duration-300 font-medium relative ${isActive ? 'bg-white/15 border-r-4 border-white active' : 'hover:bg-white/10 hover:-translate-x-2'}`}
+                        className={`nav-item w-full flex items-center px-5 py-2.5 rounded-[10px] transition-all duration-300 font-medium relative ${isActive ? 'bg-white/15 border-r-4 border-white active' : 'hover:bg-white/10 hover:translate-x-2'}`}
                       >
                         <div className="flex items-center gap-3 flex-1">
                           <Wrench size={20} className="ml-4" />
@@ -1470,45 +1469,52 @@ export default function App() {
               </div>
 
               {users.find(u => u.username === username)?.role === 'admin' && (
-                <div className="pt-2 border-t border-white/10 mt-2 space-y-2">
-                  <p className="px-5 text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mb-3 text-right">إدارة النظام</p>
+                <div className="pt-1 border-t border-white/10 mt-1 space-y-1">
+                  <p className="px-5 text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1 text-right">إدارة النظام</p>
                   <button
                     onClick={() => { setActiveSection('users'); setIsSidebarOpen(false); }}
-                    className={`nav-item w-full flex items-center px-5 py-4 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'users' ? 'bg-white/15 border-r-4 border-white active' : 'hover:bg-white/10 hover:-translate-x-2'}`}
+                    className={`nav-item w-full flex items-center justify-start px-5 py-2.5 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'users'
+                      ? 'bg-white/15 border-r-4 border-white active'
+                      : 'hover:bg-white/10 hover:translate-x-2'
+                      }`}
                   >
                     <Users size={20} className="ml-4" />
-                    <span className="text-[16px]">إدارة المستخدمين</span>
+                    <span className="text-[16px] text-right">إدارة المستخدمين</span>
                   </button>
+
                   <button
                     onClick={() => { setActiveSection('settings'); setIsSidebarOpen(false); }}
-                    className={`nav-item w-full flex items-center px-5 py-4 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'settings' ? 'bg-white/15 border-r-4 border-white active' : 'hover:bg-white/10 hover:-translate-x-2'}`}
+                    className={`nav-item w-full flex items-center justify-start px-5 py-2.5 rounded-[10px] transition-all duration-300 font-medium ${activeSection === 'settings'
+                      ? 'bg-white/15 border-r-4 border-white active'
+                      : 'hover:bg-white/10 hover:translate-x-2'
+                      }`}
                   >
                     <Settings size={20} className="ml-4" />
-                    <span className="text-[16px]">إعدادات النظام</span>
+                    <span className="text-[16px] text-right">إعدادات النظام</span>
                   </button>
                 </div>
               )}
             </nav>
 
-            <div className="user-info mt-auto pt-8 border-t border-white/15 text-center space-y-4">
+            {/* User Info - تقليل الـ pt والمسافات */}
+            <div className="user-info mt-auto pt-4 border-t border-white/15 text-center space-y-2">
               <div className="space-y-1">
-                <div id="userName" className="text-[1.2rem] font-black text-white mb-1 px-4 py-1.5 bg-white/10 rounded-full inline-block">
+                <div id="userName" className="text-[1.1rem] font-black text-white mb-1 px-4 py-1 bg-white/10 rounded-full inline-block">
                   {users.find(u => u.username === username)?.name || username}
                 </div>
-                <div id="userRole" className="text-[0.95rem] font-bold opacity-90">
-                  {users.find(u => u.username === username)?.role === 'admin' ? 'مدير النظام' : 'صلاحية محدودة'}
+                <div id="userRole" className="text-[0.9rem] font-bold opacity-90">
+                  {users.find(u => u.username === username)?.role === 'admin' && 'مدير النظام'}
                 </div>
               </div>
 
-              <p className="text-[0.85rem] font-bold opacity-70 leading-relaxed px-4">وحدة الكهرباء والاتصالات</p>
-              <p className="text-[0.8rem] font-black opacity-60 px-4 mt-2">Design by MURTADA AL_JANABY</p>
-
+              <p className="text-[0.8rem] font-bold opacity-90 leading-tight px-2">وحدة الكهرباء والاتصالات</p>
+              <p className="text-[0.7rem] font-black opacity-80 px-2 -mt-1">DESIGN BY MURTADA AL_JANABY</p>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-600/10 hover:bg-red-600 text-white rounded-[15px] transition-all duration-300 font-bold text-[15px] group border border-red-600/20 active:scale-95 mt-4"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600/10 hover:bg-red-600 text-white rounded-[12px] transition-all duration-300 font-bold text-[14px] group border border-red-600/20 active:scale-95 mt-2"
               >
                 <span>الخروج</span>
-                <LogOut size={18} className="group-hover:translate-x-1 transition-transform" />
+                <LogOut size={14} className="group-hover:translate-x-2 transition-transform" />
               </button>
             </div>
           </aside>
@@ -1525,15 +1531,15 @@ export default function App() {
                   {/* Welcome Section */}
                   <div className="welcome-section text-center md:text-right w-full xl:w-auto order-1 xl:order-2 relative z-10">
                     <div className="welcome-badge inline-flex items-center gap-2 px-4 py-1.5 bg-[#1a5e1a]/10 text-[#1a5e1a] text-[11px] font-black rounded-full uppercase tracking-widest mb-3 border border-[#1a5e1a]/20 shadow-sm transition-all hover:bg-[#1a5e1a]/15">
-                      <User size={14} fill="currentColor" className="opacity-80" />
-                      <span>مرحباً بك عزيزي</span>
+                      <User size={16} fill="currentColor" className="opacity-80" />
+                      <span>مرحباً بك </span>
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tighter leading-tight flex flex-col md:flex-row items-center md:items-end gap-4">
-                      <span className="bg-gradient-to-l from-[#1a5e1a] to-gray-600 bg-clip-text text-transparent">{users.find(u => u.username === username)?.name || username}</span>
+                    <h1 className="text-3xl md:text-3.5xl font-black text-gray-900 tracking-tighter leading-tight flex flex-col md:flex-row items-center md:items-end gap-4">
+                      <span className="bg-gradient-to-l from-[#1a5e1a] to-gray-500 bg-clip-text text-transparent">{users.find(u => u.username === username)?.name || username}</span>
                     </h1>
                     <div className="department-info flex items-center justify-center md:justify-start gap-2 mt-3 text-gray-500 font-black text-sm">
-                      <ShieldCheck size={16} className="text-[#1a5e1a]" />
-                      <span className="tracking-wide font-black">اسناد الصيانة الهندسي</span>
+                      <ShieldCheck size={18} className="text-[#1a5e1a]" />
+                      <span className="tracking-wide font-black">برنامج اسناد الصيانة الهندسي</span>
                     </div>
                   </div>
 
@@ -3309,18 +3315,18 @@ export default function App() {
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="w-[120px] h-[120px] md:w-[150px] md:h-[150px] rounded-full overflow-hidden border-4 border-white shadow-2xl mb-4 transition-transform hover:scale-105 hover:rotate-6">
             <img
-              src="https://i.ibb.co/0jpV8nXS/image.png"
+              src="https://i.ibb.co/yBmYJQ9H/image.png"
               alt="Maintenance Support Logo"
               className="w-full h-full object-cover"
             />
           </div>
-          <h1 className="text-3xl md:text-[2rem] font-black text-[#eeeeee] mb-1 drop-shadow-[2px_2px_4px_rgba(255,0,0,1)]">
+          <h1 className="text-1xl md:text-[1.7rem] font-black text-[#eeeeee] mb-1 drop-shadow-[2px 2px 4px rgb(255, 0, 0)]">
             اسناد الصيانة الهندسي
           </h1>
-          <h2 className="bg-white/10 text-white px-5 py-1 rounded-full text-lg md:text-[1.3rem] font-black mb-3">
+          <h2 className="bg-white/10 text-white px-5 py-1 rounded-full text-lg md:text-[1.2rem] font-black mb-3">
             العتبة العباسية المقدسة
           </h2>
-          <p className="bg-[#1a5e1a] text-white px-4 py-1.5 rounded-full text-xs md:text-[0.95rem] font-bold">
+          <p className="bg-[#1a5e1a] text-white px-4 py-1.5 rounded-full text-xs md:text-[0.85rem] font-bold">
             قسم المشاريع الهندسية - شعبة صيانة مجموعة العميد
           </p>
         </div>
@@ -3335,6 +3341,7 @@ export default function App() {
               ref={usernameRef}
               type="text"
               placeholder="اسم المستخدم"
+              autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full pr-12 pl-4 py-3 bg-white/95 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-[#1a5e1a] transition-all font-semibold text-[#2c3e50]"
@@ -3346,6 +3353,7 @@ export default function App() {
               <Lock size={18} />
             </div>
             <input
+              ref={passwordRef}
               type={showPassword ? 'text' : 'password'}
               placeholder="كلمة المرور"
               value={password}
