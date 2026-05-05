@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User, Lock, Eye, EyeOff, ArrowLeft, MessageCircle, Activity, Clock, Layers, Bell, BellOff, Download, Trash2, Menu, X, Pen, Building, LayoutDashboard, Wrench, Users, Settings, LogOut, ShieldCheck, FileSpreadsheet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import editIcon from './assets/edit_icon.png';
+import whatsappIcon from './assets/whatsapp_icon.jpg';
 import * as XLSX from 'xlsx';
 import {
   collection,
@@ -170,13 +172,6 @@ const SectionStats = ({
         color: 'from-blue-400 to-blue-600'
       },
       {
-        title: 'طلبات القسم (جديدة/انتظار)',
-        count: pendingReqs.length,
-        icon: <Bell />,
-        color: 'from-orange-500 to-orange-700',
-        pulse: pendingReqs.length > 0
-      },
-      {
         title: `الطلبات المنجزة (${currentYear})`,
         count: completedYear.length,
         icon: <Layers />,
@@ -189,6 +184,13 @@ const SectionStats = ({
         color: 'from-green-400 to-green-600'
       },
       {
+        title: 'طلبات القسم (جديدة/انتظار)',
+        count: pendingReqs.length,
+        icon: <Bell />,
+        color: 'from-orange-500 to-orange-700',
+        pulse: pendingReqs.length > 0
+      },
+      {
         title: 'طلبات الوحدة',
         count: unitReqs.length,
         icon: <BellOff />,
@@ -199,28 +201,31 @@ const SectionStats = ({
   }, [requests, activeSection, userUnits, userRole, currentYear, currentMonth]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-2 rtl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 rtl">
       {stats.map((s, idx) => (
         <motion.div
           key={idx}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.05 }}
-          className="relative group"
+          className="relative group h-full"
         >
           {s.pulse && (
-            <div className={`absolute top-1 left-1 w-2 h-2 rounded-full bg-red-500 animate-ping z-20`}></div>
+            <div className="absolute top-0 left-0 flex h-4 w-4 z-20 -mt-1 -ml-1">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border border-white shadow-sm"></span>
+            </div>
           )}
-          <div className="bg-white p-3 rounded-[1.5rem] shadow-sm border border-gray-100 hover:border-[#1a5e1a]/20 transition-all hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 overflow-hidden relative group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-gray-50/50">
-            <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${s.color} opacity-[0.03] -mr-6 -mt-6 rounded-full transition-transform group-hover:scale-150`}></div>
-            <div className="flex flex-col items-center gap-2 relative z-10 text-center">
-              <div className={`w-10 h-10 bg-gradient-to-br ${s.color} text-white rounded-[0.8rem] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:rotate-12 group-hover:scale-110`}>
-                {React.cloneElement(s.icon as any, { size: 20, strokeWidth: 2.5 })}
+          <div className="bg-white p-4 h-full rounded-[1.5rem] shadow-sm border border-gray-100 hover:border-[#1a5e1a]/20 transition-all hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 overflow-hidden relative group-hover:bg-gradient-to-b group-hover:from-white group-hover:to-gray-50/50 flex flex-col justify-between">
+            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${s.color} opacity-[0.03] -mr-6 -mt-6 rounded-full transition-transform duration-500 group-hover:scale-[2]`}></div>
+            <div className="flex flex-col items-center justify-center gap-3 relative z-10 text-center h-full">
+              <div className={`w-12 h-12 bg-gradient-to-br ${s.color} text-white rounded-[1rem] flex items-center justify-center shadow-lg transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shrink-0`}>
+                {React.cloneElement(s.icon as any, { size: 24, strokeWidth: 2.5 })}
               </div>
-              <div className="space-y-0.5">
-                <p className="text-[9px] font-black text-gray-400 leading-tight h-6 flex items-center justify-center uppercase tracking-tighter px-1">{s.title}</p>
-                <div className="flex items-baseline justify-center">
-                  <h4 className="text-xl font-black text-gray-900 tracking-tighter">{s.count}</h4>
+              <div className="flex flex-col items-center gap-1.5 w-full flex-1 justify-between">
+                <p className="text-[11px] font-black text-gray-500 leading-tight flex items-center justify-center tracking-tighter w-full">{s.title}</p>
+                <div className="flex items-baseline justify-center mt-auto pt-1">
+                  <h4 className="text-2xl font-black text-gray-900 tracking-tighter">{s.count}</h4>
                 </div>
               </div>
             </div>
@@ -340,6 +345,52 @@ export default function App() {
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const isRequestsInitialized = useRef(false);
+
+  // Mobile hardware back button handling (PWA)
+  const isBackNavigation = useRef(false);
+
+  useEffect(() => {
+    if (isBackNavigation.current) {
+      isBackNavigation.current = false;
+      return;
+    }
+
+    const isAtRoot = activeSection === 'dashboard' &&
+      activeSectionTab === 'list' &&
+      activeUserSubSection === 'list' &&
+      !editingRequest &&
+      !editingUser &&
+      !whatsappModal.isOpen;
+
+    if (!isAtRoot) {
+      window.history.pushState({ appState: true }, '');
+    }
+  }, [activeSection, activeSectionTab, activeUserSubSection, editingRequest, editingUser, whatsappModal.isOpen]);
+
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      isBackNavigation.current = true;
+
+      if (whatsappModal.isOpen) {
+        setWhatsappModal(prev => ({ ...prev, isOpen: false }));
+      } else if (editingRequest) {
+        setEditingRequest(null);
+      } else if (editingUser) {
+        setEditingUser(null);
+      } else if (activeUserSubSection === 'form') {
+        setActiveUserSubSection('list');
+      } else if (activeSectionTab === 'raise') {
+        setActiveSectionTab('list');
+      } else if (activeSection !== 'dashboard') {
+        setActiveSection('dashboard');
+      } else {
+        isBackNavigation.current = false;
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeSection, activeSectionTab, activeUserSubSection, editingRequest, editingUser, whatsappModal.isOpen]);
 
   // Notifications State & Logic
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
@@ -1628,8 +1679,8 @@ export default function App() {
             )}
           </div>
 
-          <main className={`flex-1 min-w-0 bg-[#f8fafc] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${activeSectionTab === 'raise' ? 'lg:pr-0 overflow-hidden h-screen' : (isDesktopSidebarOpen ? 'lg:pr-[300px]' : 'lg:pr-0 w-full max-w-[100vw]')}`}>
-            <div className={`w-full p-4 md:p-6 lg:p-8 space-y-6 ${activeSectionTab === 'raise' ? 'hidden sm:block opacity-20 pointer-events-none grayscale' : ''} ${!isDesktopSidebarOpen ? 'lg:pr-[5rem]' : ''}`}>
+          <main className={`flex-1 min-w-0 bg-[#f8fafc] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${activeSectionTab === 'raise' ? 'lg:pr-0 overflow-hidden h-screen' : (isDesktopSidebarOpen ? 'lg:pr-[285px]' : 'lg:pr-0 w-full max-w-[100vw]')}`}>
+            <div className={`w-full p-2 md:p-4 lg:pl-2 lg:pr-[1.5rem] lg:py-6 space-y-6 ${activeSectionTab === 'raise' ? 'hidden sm:block opacity-20 pointer-events-none grayscale' : ''}`}>
 
               {/* Professional Header Section - Optimized & Compact */}
               {activeSection === 'dashboard' && (
@@ -2084,7 +2135,7 @@ export default function App() {
                                             { id: 'editAssignedUnit', label: 'تعديل الوحدة المكلفة', icon: '🏢' },
                                             { id: 'editRequestDetails', label: 'تعديل الطلب (المواقع والنوع)', icon: '📍' },
                                             { id: 'editDeptNotes', label: 'تعديل ملاحظات الشعبة', icon: '📜' },
-                                            { id: 'exportReports', label: 'تصدير Excel', icon: '📄' }
+                                            { id: 'exportReports', label: 'تصدير ', icon: '📄' }
                                           ].map(p => (
                                             <label key={p.id} className="flex items-center gap-3 p-4 bg-white rounded-2xl border-2 border-gray-50 hover:border-blue-500 hover:shadow-lg cursor-pointer transition-all group">
                                               <div className="relative flex items-center justify-center">
@@ -2323,39 +2374,48 @@ export default function App() {
 
                             return (
                               <div className="section-content-wrapper">
-                                {/* Section Sub-Navigation */}
-                                <div className="flex justify-center md:justify-end items-center mb-2">
-                                  <div className="flex flex-wrap items-center gap-3 p-1.5 bg-gray-100 rounded-xl w-fit">
-                                    {(userSectionPerms?.viewRequests || currentUserData?.role === 'admin') && (
-                                      <button
-                                        onClick={() => setActiveSectionTab('list')}
-                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'list' ? 'bg-[#1a5e1a] text-white shadow-lg' : 'bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a]'}`}
-                                      >
-                                        الطلبات
-                                      </button>
-                                    )}
+                                {/* Top Section: Stats and Action Buttons */}
+                                <div className="flex flex-col xl:flex-row gap-4 mb-4 items-stretch">
+                                  {/* Right Side: Actions Grid (Appears on right in RTL because it is first) */}
+                                  <div className="shrink-0 flex items-stretch justify-center">
+                                    <div className="grid grid-cols-2 gap-3 p-3 bg-gray-100/80 rounded-[2rem] border border-white shadow-sm w-full xl:w-[320px] h-full content-center">
+                                      {(userSectionPerms?.viewRequests || currentUserData?.role === 'admin') && (
+                                        <button
+                                          onClick={() => setActiveSectionTab('list')}
+                                          className={`relative flex items-center justify-center gap-2 min-w-[130px] h-[45px] rounded-full font-black text-[15px] border-[2px] transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0 overflow-hidden ${activeSectionTab === 'list' ? 'bg-gradient-to-b from-[#2a8a2a] to-[#134d13] border-[#4ade80]/40 shadow-lg text-white hover-soft-pulse-green' : 'bg-gradient-to-b from-[#1f6b1f] to-[#0f3d0f] border-[#4ade80]/20 shadow-md text-white/90 hover:text-white hover:from-[#2a8a2a] hover:to-[#134d13] hover:border-[#4ade80]/40 hover-soft-pulse-green'}`}
+                                        >
+                                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none"></div>
+                                          <div className="absolute inset-0 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] pointer-events-none"></div>
+                                          <span className="relative z-10 flex items-center justify-center gap-2 w-full">الطلبات</span>
+                                        </button>
+                                      )}
 
-                                    {currentUserData?.role === 'admin' && (
-                                      <button
-                                        onClick={exportAllRequestsToExcel}
-                                        className="px-8 py-2 rounded-xl font-bold transition-all bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a] flex items-center gap-2"
-                                      >
-                                        <span>تصدير Excel</span>
-                                        <FileSpreadsheet size={18} />
-                                      </button>
-                                    )}
+                                      {(userSectionPerms?.raiseRequest || currentUserData?.role === 'admin') && (
+                                        <button
+                                          onClick={() => setActiveSectionTab('raise')}
+                                          className={`relative flex items-center justify-center gap-2 min-w-[130px] h-[45px] rounded-full font-black text-[15px] border-[2px] transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0 overflow-hidden ${activeSectionTab === 'raise' ? 'bg-gradient-to-b from-[#2a8a2a] to-[#134d13] border-[#4ade80]/40 shadow-lg text-white hover-soft-pulse-green' : 'bg-gradient-to-b from-[#1f6b1f] to-[#0f3d0f] border-[#4ade80]/20 shadow-md text-white/90 hover:text-white hover:from-[#2a8a2a] hover:to-[#134d13] hover:border-[#4ade80]/40 hover-soft-pulse-green'}`}
+                                        >
+                                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none"></div>
+                                          <div className="absolute inset-0 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] pointer-events-none"></div>
+                                          <span className="relative z-10 flex items-center justify-center gap-2 w-full">رفع طلب</span>
+                                        </button>
+                                      )}
 
-                                    {(userSectionPerms?.raiseRequest || currentUserData?.role === 'admin') && (
-                                      <button
-                                        onClick={() => setActiveSectionTab('raise')}
-                                        className={`px-8 py-2 rounded-xl font-bold transition-all ${activeSectionTab === 'raise' ? 'bg-[#1a5e1a] text-white shadow-lg' : 'bg-[#1a5e1a]/80 text-white hover:bg-[#1a5e1a]'}`}
-                                      >
-                                        رفع طلب
-                                      </button>
-                                    )}
+                                      {currentUserData?.role === 'admin' && (
+                                        <button
+                                          onClick={exportAllRequestsToExcel}
+                                          className="relative flex items-center justify-center gap-2 min-w-[130px] h-[45px] rounded-full font-black text-[15px] border-[2px] transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0 overflow-hidden bg-gradient-to-b from-[#1f6b1f] to-[#0f3d0f] border-[#4ade80]/20 shadow-md text-white/90 hover:text-white hover:from-[#2a8a2a] hover:to-[#134d13] hover:border-[#4ade80]/40 hover-soft-pulse-green"
+                                        >
+                                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none"></div>
+                                          <div className="absolute inset-0 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] pointer-events-none"></div>
+                                          <span className="relative z-10 flex items-center justify-center gap-2 w-full">
+                                            <span>تصدير</span>
+                                            <FileSpreadsheet size={18} />
+                                          </span>
+                                        </button>
+                                      )}
 
-                                    {currentUserData?.role === 'admin' && (
-                                      <div className="flex gap-2 mr-2 border-r border-gray-300 pr-4">
+                                      {currentUserData?.role === 'admin' && (
                                         <button
                                           onClick={async () => {
                                             const sectionName = activeSection === 'dashboard' ? 'جميع الأقسام' : (sections.find(s => s.id === activeSection)?.name || activeSection);
@@ -2373,7 +2433,6 @@ export default function App() {
                                             if (window.confirm(confirmMsg)) {
                                               try {
                                                 const batch = writeBatch(db);
-                                                // Force deletion based on the serial 'id' as the Document Name
                                                 targetReqs.forEach((r: any) => {
                                                   const finalDocId = r.id?.toString().trim();
                                                   if (finalDocId) {
@@ -2390,23 +2449,29 @@ export default function App() {
                                               }
                                             }
                                           }}
-                                          className="px-5 py-2 rounded-xl font-bold bg-red-600 text-white hover:bg-red-700 shadow-md flex items-center gap-2 transform active:scale-95 transition-all"
+                                          className="relative flex items-center justify-center gap-2 min-w-[130px] h-[45px] rounded-full font-black text-[15px] border-[2px] transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 active:translate-y-0 overflow-hidden bg-gradient-to-b from-[#dc2626] to-[#991b1b] border-[#fca5a5]/20 shadow-md text-white/90 hover:text-white hover:from-[#ef4444] hover:to-[#b91c1c] hover:border-[#fca5a5]/40 hover-soft-pulse-red"
                                         >
-                                          <Trash2 size={18} />
-                                          <span className="uppercase tracking-tighter text-[11px] font-black underline decoration-white/30 underline-offset-4 bg-red-700/30 px-2 py-1 rounded-md">تصفير الطلبات</span>
+                                          <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none"></div>
+                                          <div className="absolute inset-0 rounded-full shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] pointer-events-none"></div>
+                                          <span className="relative z-10 flex items-center justify-center gap-2 w-full">
+                                            <Trash2 size={18} />
+                                            <span>تصفير</span>
+                                          </span>
                                         </button>
-                                      </div>
-                                    )}
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Left Side: Stats (Appears on left in RTL because it is second) */}
+                                  <div className="flex-1 min-w-0">
+                                    <SectionStats
+                                      requests={visibleRequests}
+                                      activeSection={activeSection}
+                                      userUnits={userSectionPerms?.units || []}
+                                      userRole={currentUserData?.role || 'user'}
+                                    />
                                   </div>
                                 </div>
-
-                                {/* Raise Request Modal Content logic moved to separate sibling below main container to avoid hidden parent bug */}
-                                <SectionStats
-                                  requests={visibleRequests}
-                                  activeSection={activeSection}
-                                  userUnits={userSectionPerms?.units || []}
-                                  userRole={currentUserData?.role || 'user'}
-                                />
 
                                 <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 animate-in fade-in duration-500">
                                   <div className="py-1 px-4 bg-gray-50 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-2">
@@ -2480,70 +2545,108 @@ export default function App() {
 
                                   {/* Desktop View */}
                                   <div className="hidden md:block overflow-auto max-h-[65vh] shadow-inner relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-50">
-                                    <table className="w-full text-[13px] text-right border-collapse whitespace-nowrap">
+                                    <table className="w-full min-w-[1200px] table-fixed text-[13px] text-right border-collapse whitespace-nowrap">
                                       <thead className="sticky top-0 z-20 shadow-md">
                                         <tr className="bg-[#1a5e1a] text-white">
-                                          <th className="p-4 font-black border-l border-white/10 uppercase tracking-tighter w-16 text-center">ID</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-24 text-center">وقت الرفع</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">المجمع</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">مقدم الطلب</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">القسم</th>
+                                          <th className="p-3 font-black border border-white/40 uppercase tracking-tighter w-20 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">ID</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-20 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">وقت الرفع</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-14 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">المجمع</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-28 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">مقدم الطلب</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-28 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">القسم</div>
+                                          </th>
                                           {/* Dynamic Question Columns */}
-                                          {sections.find(s => s.id === activeSection)?.questions.map(q => (
-                                            <th key={q.id} className="p-4 font-black border-l border-white/10 min-w-[150px]">{q.title}</th>
-                                          ))}
-                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">الوحدة المكلفة</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-28 text-center">حالة العمل</th>
-                                          <th className="p-4 font-black border-l border-white/10 w-24 text-center">وقت الإنجاز</th>
-                                          <th className="p-4 font-black border-l border-white/10 min-w-[150px]">ملاحظات الشعبة</th>
-                                          <th className="p-4 font-black w-24 text-center">آخر إرسال</th>
+                                          {sections.find(s => s.id === activeSection)?.questions.map(q => {
+                                            let colWidth = "w-[200px]";
+                                            if (q.title.includes("البناية") || q.title.includes("موقع الصيانة")) {
+                                              colWidth = "w-[150px]";
+                                            } else if (q.title.includes("ملاحظات إضافية")) {
+                                              colWidth = "w-[120px]";
+                                            }
+                                            return (
+                                              <th key={q.id} className={`p-3 font-black border border-white/40 ${colWidth} align-middle text-center`}>
+                                                <div className="flex items-center justify-center w-full h-full text-center">{q.title}</div>
+                                              </th>
+                                            );
+                                          })}
+                                          <th className="p-3 font-black border border-white/40 w-24 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">الوحدة المكلفة</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-24 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">حالة العمل</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-20 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">وقت الإنجاز</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-[120px] text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">ملاحظات الشعبة</div>
+                                          </th>
+                                          <th className="p-3 font-black border border-white/40 w-20 text-center align-middle">
+                                            <div className="flex items-center justify-center w-full h-full text-center">آخر إرسال</div>
+                                          </th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {paginatedRequests.map(req => (
-                                          <tr key={req.id} className={`hover:bg-gray-50 border-b border-gray-100 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'bg-red-50/50' : ''}`}>
-                                            <td className="p-4 font-black text-gray-500 border-l border-gray-50 group-hover:bg-green-50/30 transition-colors align-top w-16 text-center">
+                                          <tr key={req.id} className={`hover:bg-gray-50 border-b border-gray-100 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'row-pending-pulse' : ''}`}>
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 group-hover:bg-green-50/30 transition-colors align-middle w-20 text-center text-[14px]">
                                               <div className="flex items-center justify-center gap-1.5">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-[#1a5e1a] animate-pulse"></div>
-                                                <span className="bg-gray-100 px-2 py-0.5 rounded-md shadow-sm border border-gray-200">{req.id}</span>
+                                                <span className="bg-gray-100 px-2 py-0.5 rounded-md shadow-sm border border-gray-300">{req.id}</span>
                                               </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-600 align-top w-24 text-center">
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 align-middle w-20 text-center text-[14px]">
                                               {req.timestamp.toLocaleDateString('ar-EG')} <br />
-                                              <span className="text-[11px] opacity-70">{req.timestamp.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                                              <span className="text-[12px] text-gray-500">{req.timestamp.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
                                             </td>
-                                            <td className="p-4 font-black text-[#1a5e1a] align-top w-28 text-center">
-                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                            <td className="p-3 font-black text-[#1a5e1a] border border-gray-300 align-middle w-14 text-center text-[14px]">
+                                              <div className="whitespace-normal leading-tight inline-block" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                                                 {sections.find(s => s.id === req.sectionId)?.name}
                                               </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-900 align-top w-28 text-center">
-                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 align-middle w-28 text-center text-[14px]">
+                                              <div className="whitespace-normal break-words leading-tight">
                                                 {req.submitterName}
                                               </div>
                                             </td>
-                                            <td className="p-4 text-gray-700 font-extrabold align-top w-28 text-center">
-                                              <div className="whitespace-normal break-words line-clamp-2 leading-tight">
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 align-middle w-28 text-center text-[14px]">
+                                              <div className="whitespace-normal break-words leading-tight">
                                                 {req.submitterDept}
                                               </div>
                                             </td>
 
                                             {/* Dynamic Answer Columns */}
-                                            {sections.find(s => s.id === activeSection)?.questions.map(q => (
-                                              <td key={q.id} className="p-4 min-w-[150px] font-bold text-gray-800 align-top">
-                                                <div className="line-clamp-3 text-[11px] whitespace-normal leading-relaxed text-justify">
-                                                  {req.answers[q.id] || '-'}
-                                                </div>
-                                              </td>
-                                            ))}
+                                            {sections.find(s => s.id === activeSection)?.questions.map(q => {
+                                              let colWidth = "w-[200px]";
+                                              if (q.title.includes("البناية") || q.title.includes("موقع الصيانة")) {
+                                                colWidth = "w-[150px]";
+                                              } else if (q.title.includes("ملاحظات إضافية")) {
+                                                colWidth = "w-[120px]";
+                                              }
+                                              return (
+                                                <td key={q.id} className={`p-3 ${colWidth} font-black text-gray-900 border border-gray-300 align-middle text-[14px] text-center`}>
+                                                  <div className="whitespace-normal break-words leading-relaxed text-center">
+                                                    {req.answers[q.id] || '-'}
+                                                  </div>
+                                                </td>
+                                              );
+                                            })}
 
-                                            <td className="p-4 align-top w-28 text-center">
-                                              <span className={`font-black px-2 py-1 block w-full whitespace-normal leading-tight rounded-xl text-[10px] ${req.assignedUnit ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                                            <td className="p-3 align-middle w-24 text-center border border-gray-300">
+                                              <span className={`font-black px-2 py-1 block w-full whitespace-normal leading-tight rounded-xl text-[12px] ${req.assignedUnit ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
                                                 {req.assignedUnit || 'بانتظار التوزيع'}
                                               </span>
                                             </td>
-                                            <td className="p-4 align-top w-28 text-center">
-                                              <div className={`flex flex-col items-center justify-center font-black text-[11px] whitespace-normal leading-tight ${req.status === 'منجز' ? 'text-green-600' : 'text-red-500 animate-pulse'}`}>
+                                            <td className={`p-3 align-middle w-24 text-center border border-gray-300 transition-colors ${req.status === 'منجز' ? 'bg-green-100/70' : ''}`}>
+                                              <div className={`flex flex-col items-center justify-center font-black text-[13px] whitespace-normal leading-tight ${req.status === 'منجز' ? 'text-green-700' : 'text-red-600 animate-pulse'}`}>
                                                 {req.status ? (
                                                   <>
                                                     <div className="w-1.5 h-1.5 rounded-full bg-green-600 mb-1"></div>
@@ -2557,26 +2660,32 @@ export default function App() {
                                                 )}
                                               </div>
                                             </td>
-                                            <td className="p-4 font-black text-gray-600 align-top w-24 text-center">
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 align-middle w-20 text-center text-[14px]">
                                               {req.completionTime ? (
                                                 <div className="whitespace-normal leading-tight">
                                                   <span>{req.completionTime.toLocaleDateString('ar-EG')}</span><br />
-                                                  <span className="text-[10px] opacity-70">{req.completionTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                  <span className="text-[12px] text-gray-500">{req.completionTime.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
                                               ) : '-'}
                                             </td>
-                                            <td className="p-4 text-gray-500 text-[12px] font-bold italic min-w-[150px] align-top">
-                                              <div className="line-clamp-3 text-[11px] whitespace-normal leading-relaxed text-justify">
+                                            <td className="p-3 font-black text-gray-900 border border-gray-300 text-[14px] w-[120px] align-middle text-center">
+                                              <div className="whitespace-normal break-words leading-relaxed text-center">
                                                 {req.sectionNotes || 'لا توجد ملاحظات...'}
                                               </div>
                                             </td>
-                                            <td className="p-4 align-top w-24 text-center">
-                                              <div className="flex flex-col items-center gap-2">
-                                                <div className="flex items-center justify-center gap-2 w-full">
+                                            <td className="p-2 align-middle w-20 text-center border border-gray-300">
+                                              <div className="flex flex-col items-center gap-1.5">
+                                                <div className="flex items-center justify-center gap-1.5 w-full">
                                                   {(userSectionPerms?.editWorkStatus || userSectionPerms?.editAssignedUnit || userSectionPerms?.editDeptNotes || userSectionPerms?.editRequestDetails || currentUserData?.role === 'admin' || (userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))) && (
                                                     <button
                                                       onClick={() => setEditingRequest(req)}
-                                                      className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 group"
+                                                      className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-110 hover:-translate-y-0.5 transition-all duration-300 group focus:outline-none drop-shadow-sm hover:drop-shadow-md border border-gray-200"
+                                                      style={{
+                                                        backgroundImage: `url(${editIcon})`,
+                                                        backgroundSize: '125%',
+                                                        backgroundPosition: 'center',
+                                                        backgroundRepeat: 'no-repeat'
+                                                      }}
                                                       title="تعديل أو عرض"
                                                     >
                                                       {userSectionPerms?.viewRequests &&
@@ -2585,32 +2694,34 @@ export default function App() {
                                                         !userSectionPerms?.editAssignedUnit &&
                                                         !userSectionPerms?.editDeptNotes &&
                                                         !userSectionPerms?.editRequestDetails &&
-                                                        !(userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))
-                                                        ? <Eye size={14} />
-                                                        : <Pen size={14} className="group-hover:rotate-12 transition-transform" />}
+                                                        !(userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit)) && (
+                                                          <div className="absolute inset-0 bg-white flex items-center justify-center rounded-full">
+                                                            <Eye size={14} className="text-gray-600" />
+                                                          </div>
+                                                        )}
                                                     </button>
                                                   )}
                                                   <button
                                                     onClick={() => setWhatsappModal({ isOpen: true, request: req })}
-                                                    className="relative flex items-center justify-center w-8 h-8 bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white rounded-lg shadow-[0_4px_10px_rgba(37,211,102,0.3)] hover:shadow-[0_6px_15px_rgba(37,211,102,0.5)] hover:-translate-y-0.5 transition-all duration-300 group"
+                                                    className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-110 hover:-translate-y-0.5 transition-all duration-300 group focus:outline-none drop-shadow-sm hover:drop-shadow-md border border-gray-200"
+                                                    style={{
+                                                      backgroundImage: `url(${whatsappIcon})`,
+                                                      backgroundSize: '145%',
+                                                      backgroundPosition: 'center',
+                                                      backgroundRepeat: 'no-repeat'
+                                                    }}
                                                     title="إرسال إشعار عبر واتساب"
                                                   >
-                                                    <MessageCircle size={16} className="group-hover:scale-110 transition-transform" />
                                                   </button>
                                                 </div>
-                                                <div className="flex flex-col items-center gap-0.5 mt-1 bg-gray-50/80 w-full py-1.5 rounded-lg border border-gray-100">
-                                                  <span className="font-black text-gray-800 text-[10px] whitespace-normal leading-tight line-clamp-2 px-1">
+                                                <div className="flex flex-col items-center justify-center gap-0 w-full py-1 px-1 rounded-md border border-gray-100 bg-gray-50/80">
+                                                  <span className="font-black text-gray-900 text-[10px] whitespace-normal leading-tight line-clamp-1 w-full text-center">
                                                     {req.lastSentRecipients?.[0] || req.lastSent?.split('-')[0]?.replace('whatsapp:', '')?.split('(')[0]?.trim() || 'لم يرسل'}
                                                   </span>
                                                   {(req.lastSentDate || req.lastSent) && (
-                                                    <span className="text-[9px] text-gray-500 font-bold tracking-tighter">
+                                                    <span className="text-[9px] text-gray-600 font-bold tracking-tighter w-full text-center whitespace-normal leading-tight">
                                                       {req.lastSentDate
-                                                        ? (
-                                                          <>
-                                                            {req.lastSentDate.toLocaleDateString('ar-EG')} <br />
-                                                            <span className="opacity-80">{req.lastSentDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                          </>
-                                                        )
+                                                        ? `${req.lastSentDate.toLocaleDateString('ar-EG')} ${req.lastSentDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`
                                                         : (req.lastSent?.includes('(') ? req.lastSent.split('(')[1].split(')')[0] : (req.lastSent?.split('-').pop()?.trim() || ''))}
                                                     </span>
                                                   )}
@@ -2626,7 +2737,7 @@ export default function App() {
                                   {/* Mobile View */}
                                   <div className="md:hidden divide-y divide-gray-100 text-right">
                                     {paginatedRequests.map(req => (
-                                      <div key={req.id} className={`p-6 space-y-4 hover:bg-gray-50 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'bg-red-50/30' : ''}`}>
+                                      <div key={req.id} className={`p-6 space-y-4 hover:bg-gray-50 transition-colors ${!req.status || req.status === 'قيد الانتظار' ? 'row-pending-pulse' : ''}`}>
                                         <div className="flex justify-between items-start">
                                           <div className="flex items-center gap-3">
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${req.status === 'منجز' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
