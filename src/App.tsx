@@ -93,12 +93,12 @@ const MultiSelectDropdown = ({ options, name, placeholder }: { options: string[]
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 cursor-pointer flex flex-wrap gap-2 items-center min-h-[60px] text-base md:text-lg font-bold text-gray-900 shadow-sm"
+        className="w-full px-5 py-3 rounded-xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer flex flex-wrap gap-2 items-center min-h-[50px] text-sm font-bold text-gray-900 transition-all hover:shadow-md focus-within:border-[#1a5e1a]/30"
       >
-        {selected.length === 0 ? <span className="text-gray-400 font-bold text-base">{placeholder || 'إختر من القائمة المتاحة...'}</span> :
+        {selected.length === 0 ? <span className="text-gray-400 font-bold text-xs">{placeholder || 'إختر من القائمة المتاحة...'}</span> :
           selected.map(s => (
-            <span key={s} className="bg-[#1a5e1a]/10 text-[#1a5e1a] px-3 py-1.5 rounded-lg text-sm font-black flex items-center gap-2" onClick={(e) => { e.stopPropagation(); toggleOption(s); }}>
-              {s} <X size={14} className="hover:text-red-500 transition-colors" />
+            <span key={s} className="bg-green-50 text-[#1a5e1a] px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-2 border border-green-100 shadow-sm animate-in zoom-in-95" onClick={(e) => { e.stopPropagation(); toggleOption(s); }}>
+              {s} <X size={12} className="hover:text-red-500 transition-colors" />
             </span>
           ))
         }
@@ -107,13 +107,27 @@ const MultiSelectDropdown = ({ options, name, placeholder }: { options: string[]
       {selected.map(s => <input type="hidden" name={name} value={s} key={s} />)}
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl z-50 max-h-60 overflow-y-auto p-2 space-y-1">
-          {options.map(opt => (
-            <label key={opt} className="flex items-center gap-3 p-3 hover:bg-[#1a5e1a]/5 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-[#1a5e1a]/10">
-              <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggleOption(opt)} className="w-5 h-5 accent-[#1a5e1a]" />
-              <span className="font-bold text-gray-700">{opt}</span>
-            </label>
-          ))}
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-2xl z-50 max-h-64 overflow-hidden flex flex-col animate-in slide-in-from-top-2 duration-200">
+          <div className="overflow-y-auto p-2 space-y-1 flex-1 custom-scrollbar">
+            {options.map(opt => (
+              <label key={opt} className="flex items-center gap-3 p-3 hover:bg-[#1a5e1a]/5 rounded-xl cursor-pointer transition-all border border-transparent hover:border-[#1a5e1a]/10 group">
+                <div className={`w-5 h-5 border-2 rounded-lg flex items-center justify-center transition-all ${selected.includes(opt) ? 'bg-[#1a5e1a] border-[#1a5e1a] shadow-sm' : 'border-gray-200 group-hover:border-[#1a5e1a]/30'}`}>
+                  <input type="checkbox" checked={selected.includes(opt)} onChange={() => toggleOption(opt)} className="sr-only" />
+                  {selected.includes(opt) && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                </div>
+                <span className={`font-bold text-sm transition-colors ${selected.includes(opt) ? 'text-[#1a5e1a]' : 'text-gray-700'}`}>{opt}</span>
+              </label>
+            ))}
+          </div>
+          <div className="p-2 bg-gray-50 border-t border-gray-100 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="w-full py-2 bg-white text-[#1a5e1a] text-xs font-black rounded-lg border border-gray-200 shadow-sm hover:bg-green-50 hover:border-green-200 transition-all active:scale-95"
+            >
+              تم الاختيار (إغلاق القائمة)
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -342,8 +356,16 @@ export default function App() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Auto-select unit when WhatsApp modal opens
+  useEffect(() => {
+    if (whatsappModal.isOpen && whatsappModal.request?.assignedUnit) {
+      setSelectedWhatsappUnit(whatsappModal.request.assignedUnit);
+    }
+  }, [whatsappModal.isOpen, whatsappModal.request]);
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const raiseFormRef = useRef<HTMLFormElement>(null);
   const isRequestsInitialized = useRef(false);
 
   // Mobile hardware back button handling (PWA)
@@ -2918,7 +2940,7 @@ export default function App() {
 
         <AnimatePresence>
           {activeSectionTab === 'raise' && (users.find(u => u.username === username)?.permissions[activeSection]?.raiseRequest || users.find(u => u.username === username)?.role === 'admin') && (
-            <div className="fixed inset-0 z-[500] overflow-y-auto bg-slate-900/60 backdrop-blur-xl flex items-start justify-center p-3 sm:p-4 md:p-8 rtl">
+            <div className="fixed inset-0 z-[500] overflow-y-auto bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4 md:p-8 rtl">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -2931,35 +2953,36 @@ export default function App() {
                 initial={{ scale: 0.9, opacity: 0, y: 40 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 40 }}
-                className="bg-white/95 backdrop-blur-sm rounded-[2rem] md:rounded-[3rem] shadow-2xl border border-white/40 w-full max-w-2xl overflow-hidden relative z-[510] flex flex-col my-auto"
+                className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_30px_100px_-15px_rgba(0,0,0,0.4)] border-4 border-white w-full max-w-2xl overflow-hidden relative z-[510] flex flex-col my-auto animate-in fade-in zoom-in duration-500"
               >
-                {/* Modal Header */}
-                <div className="px-6 py-6 md:px-10 md:py-8 border-b border-gray-100/50 flex items-center justify-between bg-white/50 backdrop-blur-md relative z-20">
-                  <div className="flex items-center gap-4 text-right">
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-[#1a5e1a]/10 text-[#1a5e1a] rounded-2xl flex items-center justify-center shadow-inner border border-[#1a5e1a]/10">
-                      <Pen size={24} className="opacity-80" />
+                {/* 3D Professional Header */}
+                <div className="relative p-6 md:p-8 bg-gradient-to-br from-[#0f3f0f] via-[#1a5e1a] to-[#22c55e] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_10px_30px_rgba(0,0,0,0.3)] border-b border-white/10 z-20">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_70%)] pointer-events-none"></div>
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/15 backdrop-blur-xl rounded-[1.2rem] flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(255,255,255,0.3)] border border-white/20 overflow-hidden group hover:scale-105 transition-transform duration-500">
+                        <img src="https://i.ibb.co/yBmYJQ9H/image.png" alt="Logo" className="w-10 h-10 object-contain filter drop-shadow-lg" />
+                      </div>
+                      <div className="text-right">
+                        <h2 className="text-xl md:text-2xl font-black tracking-tight drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>رفع طلب صيانة جديد</h2>
+                        <p className="text-[10px] md:text-xs font-bold mt-1 text-green-50/90 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                          مجمع {sections.find(s => s.id === activeSection)?.name} - اسناد الصيانة الهندسي
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-tight">
-                        رفع طلب صيانة جديد
-                      </h2>
-                      <p className="text-xs md:text-sm font-bold text-[#1a5e1a] flex items-center gap-2 mt-1 opacity-80">
-                        <span className="w-2 h-2 bg-[#1a5e1a] rounded-full animate-pulse"></span>
-                        مجمع {sections.find(s => s.id === activeSection)?.name}
-                      </p>
-                    </div>
-                  </div>
 
-                  <button
-                    onClick={() => setActiveSectionTab('list')}
-                    className="w-10 h-10 md:w-12 md:h-12 bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl flex items-center justify-center transition-all border border-gray-200/50 group"
-                  >
-                    <X size={24} className="group-hover:rotate-90 transition-transform" />
-                  </button>
+                    <button
+                      onClick={() => setActiveSectionTab('list')}
+                      className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-red-500/80 hover:scale-110 transition-all border border-white/20 shadow-lg group"
+                    >
+                      <X size={20} className="text-white group-hover:rotate-90 transition-transform" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Modal Body */}
-                <div className="flex-1 overflow-y-auto scrollbar-hide p-6 md:p-10 max-h-[70vh]">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10 max-h-[75vh] bg-gray-50/30">
                   {!sections.find(s => s.id === activeSection)?.isActive ? (
                     <div className="text-center space-y-6 py-12 bg-red-50/30 rounded-3xl border border-red-100/20">
                       <div className="w-20 h-20 bg-white text-red-500 rounded-3xl flex items-center justify-center mx-auto text-3xl shadow-xl border border-red-50">⚠️</div>
@@ -2975,87 +2998,108 @@ export default function App() {
                       </button>
                     </div>
                   ) : (
-                    <form className="space-y-6 md:space-y-8 pb-4" onSubmit={handleRaiseRequest}>
-                      <div className="space-y-6">
+                    <form
+                      ref={raiseFormRef}
+                      className="space-y-6 md:space-y-6 pb-4"
+                      onSubmit={handleRaiseRequest}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          // Prevent default only if not in a multi-line field where shift+enter is used
+                          // but the user wants Enter to submit even in textareas
+                          e.preventDefault();
+                          handleRaiseRequest(e as any);
+                        }
+                      }}
+                    >
+                      <div className="space-y-5">
                         {sections.find(s => s.id === activeSection)?.questions.map(q => (
-                          <div key={q.id} className="space-y-3 group">
-                            <label className="text-base md:text-lg font-black text-gray-800 pr-1 flex items-center gap-2 group-focus-within:text-[#1a5e1a] transition-colors">
-                              <span className="w-2.5 h-2.5 bg-[#1a5e1a]/30 rounded-full group-focus-within:bg-[#1a5e1a] transition-all"></span>
+                          <div key={q.id} className="space-y-2 group">
+                            <label className="text-xs md:text-sm font-black text-gray-700 pr-1 flex items-center gap-2 group-focus-within:text-[#1a5e1a] transition-colors">
+                              <div className="w-1.5 h-4 bg-green-500/20 rounded-full group-focus-within:bg-[#1a5e1a] group-focus-within:h-5 transition-all"></div>
                               {q.title} {q.required && <span className="text-red-500">*</span>}
                             </label>
 
-                            {q.type === 'text' && (
-                              <input
-                                name={q.id}
-                                required={q.required}
-                                placeholder={`أدخل ${q.title}...`}
-                                className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 focus:border-[#1a5e1a] focus:bg-white focus:ring-8 focus:ring-[#1a5e1a]/5 focus:outline-none transition-all font-bold text-gray-900 shadow-sm placeholder:text-gray-300 text-base md:text-lg"
-                              />
-                            )}
+                            <div className="relative">
+                              {q.type === 'text' && (
+                                <input
+                                  name={q.id}
+                                  required={q.required}
+                                  placeholder={`أدخل ${q.title}...`}
+                                  className="w-full px-5 py-3 rounded-xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] focus:border-[#1a5e1a]/30 focus:shadow-md focus:outline-none transition-all font-bold text-gray-800 placeholder:text-gray-300 text-sm"
+                                />
+                              )}
 
-                            {q.type === 'textarea' && (
-                              <textarea
-                                name={q.id}
-                                required={q.required}
-                                rows={2}
-                                placeholder={`اكتب تفاصيل ${q.title} هنا بوضوح لتسهيل عملية الصيانة...`}
-                                className="w-full px-5 py-4 md:px-6 md:py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/30 focus:border-[#1a5e1a] focus:bg-white focus:ring-8 focus:ring-[#1a5e1a]/5 focus:outline-none transition-all font-bold text-gray-900 shadow-sm resize-y max-h-[150px] overflow-y-auto placeholder:text-gray-300 text-base md:text-lg"
-                              ></textarea>
-                            )}
+                              {q.type === 'textarea' && (
+                                <textarea
+                                  name={q.id}
+                                  required={q.required}
+                                  rows={2}
+                                  placeholder={`اكتب تفاصيل ${q.title} هنا بوضوح...`}
+                                  className="w-full px-5 py-3 rounded-xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] focus:border-[#1a5e1a]/30 focus:shadow-md focus:outline-none transition-all font-bold text-gray-800 shadow-sm resize-none max-h-[100px] overflow-y-auto placeholder:text-gray-300 text-sm"
+                                ></textarea>
+                              )}
 
-                            {q.type === 'dropdown' && (
-                              <MultiSelectDropdown
-                                options={q.options || []}
-                                name={q.id}
-                                placeholder="إختر من القائمة المتاحة..."
-                              />
-                            )}
+                              {q.type === 'dropdown' && (
+                                <MultiSelectDropdown
+                                  options={q.options || []}
+                                  name={q.id}
+                                  placeholder="إختر من القائمة المتاحة..."
+                                />
+                              )}
 
-                            {q.type === 'checkbox' && (
-                              <div className="flex flex-wrap gap-3 p-2">
-                                {q.options?.map(opt => (
-                                  <label key={opt} className="relative flex items-center p-3 rounded-2xl border-2 border-gray-100 hover:border-[#1a5e1a]/30 cursor-pointer transition-all bg-white group/opt has-[:checked]:border-[#1a5e1a] has-[:checked]:bg-[#1a5e1a]/5 shadow-sm">
-                                    <input
-                                      name={q.id}
-                                      value={opt}
-                                      type="checkbox"
-                                      className="peer w-6 h-6 opacity-0 absolute"
-                                    />
-                                    <div className="w-5 h-5 border-2 border-gray-200 rounded-lg peer-checked:bg-[#1a5e1a] peer-checked:border-[#1a5e1a] transition-all flex items-center justify-center shrink-0">
-                                      <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-700 pr-3 peer-checked:text-[#1a5e1a] transition-colors">{opt}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            )}
+                              {q.type === 'checkbox' && (
+                                <div className="flex flex-wrap gap-2 p-1">
+                                  {q.options?.map(opt => (
+                                    <label key={opt} className="relative flex items-center p-2.5 rounded-xl border-2 border-white bg-white shadow-sm hover:shadow-md cursor-pointer transition-all group/opt has-[:checked]:border-[#1a5e1a]/20 has-[:checked]:bg-green-50/30">
+                                      <input
+                                        name={q.id}
+                                        value={opt}
+                                        type="checkbox"
+                                        className="peer sr-only"
+                                      />
+                                      <div className="w-4 h-4 border-2 border-gray-200 rounded-md peer-checked:bg-[#1a5e1a] peer-checked:border-[#1a5e1a] transition-all flex items-center justify-center shrink-0">
+                                        <div className="w-1.5 h-1.5 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                      </div>
+                                      <span className="font-bold text-[11px] text-gray-600 pr-2.5 peer-checked:text-[#1a5e1a] transition-colors">{opt}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
 
-                            {((q as any).allowAdditionalText && (q.type === 'dropdown' || q.type === 'checkbox')) && (
-                              <input
-                                type="text"
-                                name={`${q.id}_additional`}
-                                placeholder="نص يدوي إضافي (أخرى)..."
-                                className="w-full mt-2 px-5 py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 focus:border-[#1a5e1a] focus:bg-white focus:outline-none transition-all font-bold text-gray-800 text-sm placeholder:text-gray-400"
-                              />
-                            )}
+                              {((q as any).allowAdditionalText && (q.type === 'dropdown' || q.type === 'checkbox')) && (
+                                <div className="mt-2 relative group/add">
+                                  <input
+                                    type="text"
+                                    name={`${q.id}_additional`}
+                                    placeholder="نص يدوي إضافي (أخرى)..."
+                                    className="w-full px-5 py-2.5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 focus:border-[#1a5e1a]/20 focus:bg-white focus:outline-none transition-all font-bold text-gray-700 text-[11px] placeholder:text-gray-300"
+                                  />
+                                  <Pen size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within/add:text-[#1a5e1a] transition-colors" />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
 
-                      <div className="flex flex-col sm:flex-row justify-end gap-4 pt-8 border-t border-gray-100/50">
+                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-100">
                         <button
                           type="button"
                           onClick={() => setActiveSectionTab('list')}
-                          className="px-8 py-4 rounded-2xl font-black text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all text-base order-2 sm:order-1"
+                          className="px-6 py-3.5 rounded-xl font-black text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all text-sm order-2 sm:order-1 flex items-center justify-center gap-2"
                         >
-                          إغلاق النافذة
+                          <X size={16} />
+                          <span>إغلاق النافذة</span>
                         </button>
                         <button
                           type="submit"
-                          className="px-12 py-4 bg-[#1a5e1a] hover:bg-[#2d7d2d] text-white rounded-2xl font-black shadow-xl shadow-[#1a5e1a]/20 hover:shadow-[#1a5e1a]/30 hover:-translate-y-1 active:scale-95 transition-all text-lg order-1 sm:order-2 flex items-center justify-center gap-3"
+                          className="px-10 py-3.5 bg-gradient-to-r from-[#1a5e1a] to-[#22c55e] text-white rounded-xl font-black shadow-[0_10px_20px_-5px_rgba(26,94,26,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(26,94,26,0.4)] hover:-translate-y-1 active:scale-95 transition-all text-sm order-1 sm:order-2 flex items-center justify-center gap-3 relative overflow-hidden group"
                         >
-                          <span>إرسال الطلب الآن</span>
-                          <ArrowLeft size={22} className="rotate-180" />
+                          <div className="relative z-10 flex items-center gap-2">
+                            <span>إرسال الطلب الآن</span>
+                            <ArrowLeft size={18} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                         </button>
                       </div>
                     </form>
@@ -3491,87 +3535,100 @@ export default function App() {
           <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] flex items-center justify-center p-4 rtl">
             <div className="bg-white rounded-[3rem] shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl overflow-hidden animate-in slide-in-from-bottom-20 duration-500 border border-white/20">
 
-              {/* Gradient Header */}
-              <div className="p-8 bg-gradient-to-l from-[#0f3f0f] via-[#1a5e1a] to-[#25D366] text-white relative">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_70%)]"></div>
+              {/* 3D Professional Header */}
+              <div className="relative p-8 bg-gradient-to-br from-[#0f3f0f] via-[#1a5e1a] to-[#22c55e] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_10px_30px_rgba(0,0,0,0.3)] border-b border-white/10">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_70%)] pointer-events-none"></div>
                 <div className="relative flex items-center justify-between">
-                  <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white shadow-[0_10px_25px_rgba(37,211,102,0.3)] border border-white/30 animate-pulse">
-                      <MessageCircle size={32} fill="currentColor" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-white/15 backdrop-blur-xl rounded-[1.5rem] flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(255,255,255,0.3)] border border-white/20 overflow-hidden group hover:scale-105 transition-transform duration-500">
+                      <img src="https://i.ibb.co/yBmYJQ9H/image.png" alt="Logo" className="w-12 h-12 object-contain filter drop-shadow-lg" />
                     </div>
                     <div className="text-right">
-                      <h2 className="text-2xl font-black tracking-tight">إرسال إشعار WhatsApp</h2>
-                      <p className="text-xs opacity-80 font-black mt-1">اسناد الصيانة الهندسي - شعبة صيانة مجموعة العميد</p>
+                      <h2 className="text-2xl font-black tracking-tight drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>إرسال إشعار WhatsApp</h2>
+                      <p className="text-xs font-bold mt-1 text-green-50/90">اسناد الصيانة الهندسي - شعبة صيانة مجموعة العميد</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setWhatsappModal({ isOpen: false, request: null })}
-                    className="w-10 h-10 rounded-full bg-black/20 flex items-center justify-center hover:bg-black/40 hover:scale-110 transition-all border border-white/10"
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-red-500/80 hover:scale-110 transition-all border border-white/20 shadow-lg group"
                   >
-                    <span className="text-xl">✕</span>
+                    <X size={18} className="text-white group-hover:rotate-90 transition-transform" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-10 space-y-8 text-right max-h-[65vh] overflow-y-auto custom-scrollbar">
+              <div className="p-8 space-y-8 text-right max-h-[65vh] overflow-y-auto custom-scrollbar bg-gray-50/30">
 
-                {/* Request Summary Card */}
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-3xl border-2 border-white shadow-inner relative group">
-                  <div className="absolute top-4 left-4 bg-green-500 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-md">بيانات الطلب #{whatsappModal.request?.id}</div>
-                  <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">تنسيق الرسالة المهني</p>
-                  <div className="space-y-2">
-                    <h4 className="font-black text-lg text-[#1a5e1a] border-b-2 border-green-200 pb-2 mb-3 inline-block">مجمع {sections.find(s => s.id === whatsappModal.request?.sectionId)?.name}</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/60 p-3 rounded-2xl border border-white">
-                        <span className="block text-[8px] text-gray-400 font-black">الوحدة</span>
-                        <span className="font-bold text-gray-700">{whatsappModal.request?.assignedUnit}</span>
+                {/* Info Cards Grid */}
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-white p-5 rounded-3xl border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-1 bg-green-500 h-full"></div>
+                    <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                      تفاصيل الإرسال الحالية
+                    </p>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+                        <span className="text-xs font-bold text-gray-500">اسم المجمع (القسم):</span>
+                        <span className="text-sm font-black text-[#1a5e1a] bg-green-50 px-3 py-1 rounded-lg">مجمع {sections.find(s => s.id === whatsappModal.request?.sectionId)?.name}</span>
                       </div>
-                      <div className="bg-white/60 p-3 rounded-2xl border border-white">
-                        <span className="block text-[8px] text-gray-400 font-black">الحالة</span>
-                        <span className="font-bold text-orange-600">{whatsappModal.request?.status || 'قيد الانتظار'}</span>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-gray-50/80 p-3 rounded-2xl border border-gray-100">
+                          <span className="block text-[9px] text-gray-400 font-black mb-1">الوحدة المكلفة:</span>
+                          <span className="text-xs font-black text-gray-700">{whatsappModal.request?.assignedUnit || 'غير محدد'}</span>
+                        </div>
+                        <div className="bg-gray-50/80 p-3 rounded-2xl border border-gray-100">
+                          <span className="block text-[9px] text-gray-400 font-black mb-1">الاحالة:</span>
+                          <span className="text-xs font-black text-orange-600">{whatsappModal.request?.status || 'قيد الانتظار'}</span>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-[11px] text-gray-500 mt-3 font-bold bg-white p-3 rounded-xl border border-gray-100 leading-relaxed">
-                      <span className="text-[#1a5e1a] ml-1">📝 النوع:</span>
-                      {Object.values(whatsappModal.request?.answers || {}).slice(0, 2).join(' - ')}
-                    </p>
                   </div>
                 </div>
 
-                {/* Recipient Selection */}
+                {/* Recipient Selection Section */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 pr-2">
-                    <div className="w-2 h-6 bg-green-500 rounded-full"></div>
-                    <label className="text-sm font-black text-gray-800">1. اختيار الوحدة والمسؤولين</label>
+                  <div className="flex items-center gap-3 pr-1">
+                    <div className="w-2 h-6 bg-[#1a5e1a] rounded-full shadow-sm"></div>
+                    <label className="text-sm font-black text-gray-800">اختيار الوحدة والمسؤولين</label>
                   </div>
 
-                  <select
-                    className="w-full px-5 py-4 rounded-[1.5rem] border-2 border-gray-100 focus:border-[#25D366] focus:outline-none font-bold text-gray-700 bg-gray-50 shadow-sm transition-all"
-                    onChange={(e) => setSelectedWhatsappUnit(e.target.value)}
-                    value={selectedWhatsappUnit}
-                  >
-                    <option value="">--- اختر الوحدة الهندسية ---</option>
-                    {(sections.find(s => s.id === whatsappModal.request?.sectionId)?.sectionUnits || globalUnits).map(unit => (
-                      <option key={unit} value={unit}>
-                        {unit} ({users.filter(u => u.permissions[whatsappModal.request?.sectionId]?.units.includes(unit)).length} متاح)
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className="w-full px-6 py-4 rounded-2xl border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.05)] focus:border-[#22c55e] focus:outline-none font-bold text-gray-700 bg-white appearance-none transition-all"
+                      onChange={(e) => setSelectedWhatsappUnit(e.target.value)}
+                      value={selectedWhatsappUnit}
+                    >
+                      <option value="">--- اختر الوحدة الهندسية ---</option>
+                      {(sections.find(s => s.id === whatsappModal.request?.sectionId)?.sectionUnits || globalUnits).map(unit => (
+                        <option key={unit} value={unit}>
+                          {unit} ({users.filter(u => u.permissions[whatsappModal.request?.sectionId]?.units.includes(unit)).length} مسؤول)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <Menu size={18} />
+                    </div>
+                  </div>
 
-                  <div className="bg-gray-50 rounded-[2rem] p-4 min-h-[150px] border-2 border-white shadow-inner">
+                  <div className="bg-white/50 rounded-[2.5rem] p-5 min-h-[180px] border-2 border-white shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
                     {!selectedWhatsappUnit ? (
-                      <div className="flex flex-col items-center justify-center py-10 opacity-30">
-                        <div className="text-4xl mb-2">🔍</div>
-                        <p className="text-xs font-black">يرجى تحديد وحدة لعرض الكوادر</p>
+                      <div className="flex flex-col items-center justify-center py-12 opacity-40">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <Search className="text-gray-400" size={32} />
+                        </div>
+                        <p className="text-xs font-black text-gray-500">يرجى تحديد وحدة لعرض الكوادر الهندسية</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
                         {users.filter(u => u.permissions[whatsappModal.request?.sectionId]?.units.includes(selectedWhatsappUnit)).map(u => (
                           <label
                             key={u.id}
-                            className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group shadow-sm ${selectedRecipientPhones.includes(u.phone) ? 'bg-white border-[#25D366] ring-4 ring-green-50 translate-x-[-5px]' : 'bg-white/60 border-white hover:border-green-200'}`}
+                            className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group hover:shadow-md ${selectedRecipientPhones.includes(u.phone) ? 'bg-green-50/50 border-[#22c55e] shadow-sm' : 'bg-white border-transparent'}`}
                           >
-                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${selectedRecipientPhones.includes(u.phone) ? 'bg-[#25D366] text-white rotate-12 scale-110' : 'bg-gray-100'}`}>
+                            <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all shadow-sm ${selectedRecipientPhones.includes(u.phone) ? 'bg-[#22c55e] text-white scale-110 rotate-6' : 'bg-gray-100 text-gray-300'}`}>
                               <input
                                 type="checkbox"
                                 className="sr-only"
@@ -3584,21 +3641,22 @@ export default function App() {
                                   }
                                 }}
                               />
-                              {selectedRecipientPhones.includes(u.phone) ? '✓' : ''}
+                              {selectedRecipientPhones.includes(u.phone) ? <ShieldCheck size={16} /> : <div className="w-2 h-2 bg-gray-200 rounded-full"></div>}
                             </div>
                             <div className="flex-1 flex justify-between items-center">
-                              <div>
-                                <p className="font-black text-sm text-gray-800">{u.name}</p>
-                                <p className="text-[10px] text-gray-400 font-mono">{u.phone || '000-000-000'}</p>
+                              <div className="space-y-0.5">
+                                <p className="font-black text-sm text-gray-800 group-hover:text-[#1a5e1a] transition-colors">{u.name}</p>
+                                <p className="text-[10px] text-gray-500 font-mono tracking-wider">{u.phone || 'بدون رقم هاتف'}</p>
                               </div>
-                              <span className={`text-[8px] px-3 py-1 rounded-full font-black ${u.phone ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-600'}`}>
-                                {u.phone ? 'متاح واتساب' : 'رقم مفقود'}
-                              </span>
+                              <div className={`text-[9px] px-3 py-1.5 rounded-xl font-black shadow-sm flex items-center gap-1.5 ${u.phone ? 'bg-white text-green-600 border border-green-100' : 'bg-red-50 text-red-500 border border-red-100'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${u.phone ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`}></div>
+                                {u.phone ? 'متوفر واتساب' : 'غير متاح واتساب'}
+                              </div>
                             </div>
                           </label>
                         ))}
                         {users.filter(u => u.permissions[whatsappModal.request?.sectionId]?.units.includes(selectedWhatsappUnit)).length === 0 && (
-                          <div className="text-center py-8">
+                          <div className="text-center py-10">
                             <p className="text-xs font-bold text-gray-400 italic">لا يوجد مسؤولين مسجلين لهذه الوحدة حالياً</p>
                           </div>
                         )}
@@ -3608,39 +3666,43 @@ export default function App() {
                 </div>
 
                 {/* Notes Section */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 pr-2">
-                    <div className="w-2 h-6 bg-orange-400 rounded-full"></div>
-                    <label className="text-sm font-black text-gray-800">2. الإسناد الإضافي والتعليمات</label>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 pr-1">
+                    <div className="w-2 h-6 bg-orange-500 rounded-full shadow-sm"></div>
+                    <label className="text-sm font-black text-gray-800">ملاحظة ترفق مع الرسالة</label>
                   </div>
-                  <textarea
-                    rows={3}
-                    className="w-full px-6 py-4 rounded-[1.5rem] border-2 border-gray-100 focus:border-[#25D366] bg-gray-50 focus:bg-white focus:outline-none font-bold text-sm resize-none shadow-sm transition-all"
-                    placeholder="توجيهات فنية، رتبة الأولوية، أو ملاحظات للمسؤول..."
-                    value={whatsappNote}
-                    onChange={(e) => setWhatsappNote(e.target.value)}
-                  ></textarea>
+                  <div className="relative group">
+                    <textarea
+                      rows={3}
+                      className="w-full px-6 py-4 rounded-3xl border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.05)] focus:border-orange-400 bg-white focus:outline-none font-bold text-sm resize-none transition-all placeholder:text-gray-300"
+                      placeholder="اكتب هنا أي تعليمات إضافية ترغب في إرسالها مع الإشعار..."
+                      value={whatsappNote}
+                      onChange={(e) => setWhatsappNote(e.target.value)}
+                    ></textarea>
+                    <Pen size={16} className="absolute left-5 bottom-5 text-gray-300 group-focus-within:text-orange-400 transition-colors" />
+                  </div>
                 </div>
               </div>
 
-              {/* Footer Actions */}
-              <div className="p-8 bg-gray-50 border-t border-gray-100/50 flex gap-4">
+              {/* Enhanced Footer Actions */}
+              <div className="p-8 bg-white border-t border-gray-100 flex gap-4">
                 <button
                   onClick={() => setWhatsappModal({ isOpen: false, request: null })}
-                  className="flex-1 py-4 bg-white text-gray-500 rounded-2xl font-black border-2 border-gray-200 hover:bg-gray-100 transition-all"
+                  className="flex-1 py-4 bg-gray-50 text-gray-500 rounded-2xl font-black border-2 border-gray-100 hover:bg-gray-100 hover:text-gray-700 transition-all shadow-sm flex items-center justify-center gap-2"
                 >
-                  إلغاء ✖️
+                  <X size={18} />
+                  <span>إلغاء</span>
                 </button>
                 <button
                   onClick={handleSendAdvancedWhatsApp}
                   disabled={selectedRecipientPhones.length === 0}
-                  className={`flex-[2] py-4 text-white rounded-2xl font-black shadow-lg transition-all relative overflow-hidden group ${selectedRecipientPhones.length > 0 ? 'bg-gradient-to-r from-[#128C7E] to-[#25D366] hover:-translate-y-1 hover:shadow-green-200/50' : 'bg-gray-300 opacity-50 cursor-not-allowed'}`}
+                  className={`flex-[2] py-4 text-white rounded-2xl font-black shadow-[0_10px_20px_-5px_rgba(34,197,94,0.3)] transition-all relative overflow-hidden group ${selectedRecipientPhones.length > 0 ? 'bg-gradient-to-r from-[#1a5e1a] to-[#22c55e] hover:-translate-y-1 hover:shadow-green-200/50' : 'bg-gray-200 opacity-50 cursor-not-allowed text-gray-400 shadow-none'}`}
                 >
-                  <div className="relative z-10 flex items-center justify-center gap-3 uppercase tracking-wider">
+                  <div className="relative z-10 flex items-center justify-center gap-3">
                     <span>إرسال عبر واتساب</span>
-                    <MessageCircle size={20} fill="currentColor" />
+                    <MessageCircle size={22} fill="currentColor" className="group-hover:rotate-12 transition-transform" />
                   </div>
-                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-[-20deg]"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                 </button>
               </div>
             </div>
