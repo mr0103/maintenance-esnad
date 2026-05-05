@@ -2654,8 +2654,8 @@ export default function App() {
                                             let colWidth = "w-[200px]";
                                             if (q.title.includes("البناية") || q.title.includes("موقع الصيانة")) {
                                               colWidth = "w-[150px]";
-                                            } else if (q.title.includes("ملاحظات إضافية")) {
-                                              colWidth = "w-[120px]";
+                                            } else if (q.title.includes("ملاحظات")) {
+                                              colWidth = "w-[100px]";
                                             }
                                             return (
                                               <th key={q.id} className={`p-3 font-black border border-white/40 ${colWidth} align-middle text-center`}>
@@ -2714,8 +2714,8 @@ export default function App() {
                                               let colWidth = "w-[200px]";
                                               if (q.title.includes("البناية") || q.title.includes("موقع الصيانة")) {
                                                 colWidth = "w-[150px]";
-                                              } else if (q.title.includes("ملاحظات إضافية")) {
-                                                colWidth = "w-[120px]";
+                                              } else if (q.title.includes("ملاحظات")) {
+                                                colWidth = "w-[100px]";
                                               }
                                               return (
                                                 <td key={q.id} className={`p-3 ${colWidth} font-black text-gray-900 border border-gray-300 align-middle text-[14px] text-center`}>
@@ -2756,24 +2756,27 @@ export default function App() {
                                             </td>
                                             <td className="p-3 font-black text-gray-900 border border-gray-300 text-[14px] w-[120px] align-middle text-center">
                                               <div className="whitespace-normal break-words leading-relaxed text-center">
-                                                {req.sectionNotes || 'لا توجد ملاحظات...'}
+                                                {req.sectionNotes || ''}
                                               </div>
                                             </td>
                                             <td className="p-2 align-middle w-20 text-center border border-gray-300">
                                               <div className="flex flex-col items-center gap-1.5">
-                                                <div className="flex items-center justify-center gap-1.5 w-full">
+                                                <div className="flex items-center justify-center gap-2 w-full p-1">
                                                   {(userSectionPerms?.editWorkStatus || userSectionPerms?.editAssignedUnit || userSectionPerms?.editDeptNotes || userSectionPerms?.editRequestDetails || currentUserData?.role === 'admin' || (userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit))) && (
                                                     <button
                                                       onClick={() => setEditingRequest(req)}
-                                                      className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-110 hover:-translate-y-0.5 transition-all duration-300 group focus:outline-none drop-shadow-sm hover:drop-shadow-md border border-gray-200"
-                                                      style={{
-                                                        backgroundImage: `url(${editIcon})`,
-                                                        backgroundSize: '125%',
-                                                        backgroundPosition: 'center',
-                                                        backgroundRepeat: 'no-repeat'
-                                                      }}
+                                                      className="flex-1 aspect-square rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 shadow-[0_4px_0_#1d4ed8] hover:shadow-[0_2px_0_#1d4ed8] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all duration-200 flex items-center justify-center relative overflow-hidden group border border-white/20"
                                                       title="تعديل أو عرض"
                                                     >
+                                                      <div
+                                                        className="w-full h-full opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform"
+                                                        style={{
+                                                          backgroundImage: `url(${editIcon})`,
+                                                          backgroundSize: '70%',
+                                                          backgroundPosition: 'center',
+                                                          backgroundRepeat: 'no-repeat'
+                                                        }}
+                                                      ></div>
                                                       {userSectionPerms?.viewRequests &&
                                                         currentUserData?.role !== 'admin' &&
                                                         !userSectionPerms?.editWorkStatus &&
@@ -2781,23 +2784,26 @@ export default function App() {
                                                         !userSectionPerms?.editDeptNotes &&
                                                         !userSectionPerms?.editRequestDetails &&
                                                         !(userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(req.assignedUnit)) && (
-                                                          <div className="absolute inset-0 bg-white flex items-center justify-center rounded-full">
-                                                            <Eye size={14} className="text-gray-600" />
+                                                          <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px] flex items-center justify-center rounded-xl">
+                                                            <Eye size={16} className="text-white drop-shadow-md" />
                                                           </div>
                                                         )}
                                                     </button>
                                                   )}
                                                   <button
                                                     onClick={() => setWhatsappModal({ isOpen: true, request: req })}
-                                                    className="relative flex items-center justify-center w-8 h-8 rounded-full hover:scale-110 hover:-translate-y-0.5 transition-all duration-300 group focus:outline-none drop-shadow-sm hover:drop-shadow-md border border-gray-200"
-                                                    style={{
-                                                      backgroundImage: `url(${whatsappIcon})`,
-                                                      backgroundSize: '145%',
-                                                      backgroundPosition: 'center',
-                                                      backgroundRepeat: 'no-repeat'
-                                                    }}
+                                                    className="flex-1 aspect-square rounded-xl bg-gradient-to-br from-green-400 to-green-600 shadow-[0_4px_0_#15803d] hover:shadow-[0_2px_0_#15803d] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all duration-200 flex items-center justify-center group border border-white/20"
                                                     title="إرسال إشعار عبر واتساب"
                                                   >
+                                                    <div
+                                                      className="w-full h-full opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-transform"
+                                                      style={{
+                                                        backgroundImage: `url(${whatsappIcon})`,
+                                                        backgroundSize: '75%',
+                                                        backgroundPosition: 'center',
+                                                        backgroundRepeat: 'no-repeat'
+                                                      }}
+                                                    ></div>
                                                   </button>
                                                 </div>
                                                 <div className="flex flex-col items-center justify-center gap-0 w-full py-1 px-1 rounded-md border border-gray-100 bg-gray-50/80">
@@ -3355,7 +3361,7 @@ export default function App() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="absolute inset-0 bg-slate-900/45 backdrop-blur-md transition-opacity"
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl transition-opacity"
                 onClick={() => setEditingRequest(null)}
               ></motion.div>
 
@@ -3363,51 +3369,62 @@ export default function App() {
                 onSubmit={updateRequest}
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
-                className="bg-[#fcfaf7] rounded-[2.5rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border border-white/60 w-full max-w-2xl max-h-[95vh] overflow-hidden relative z-[210] flex flex-col"
+                className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] shadow-[0_40px_100px_-15px_rgba(0,0,0,0.4)] border-4 border-white w-full max-w-2xl max-h-[95vh] overflow-hidden relative z-[210] flex flex-col"
               >
-                <div className="p-6 md:p-8 bg-white border-b border-gray-100 flex justify-between items-center relative z-20">
-                  <div className="text-right flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-700 rounded-2xl flex items-center justify-center shadow-inner border border-blue-100/50">
-                      <Activity size={24} />
+                {/* 3D Professional Header */}
+                <div className="relative p-6 md:p-8 bg-gradient-to-br from-[#0f3f0f] via-[#1a5e1a] to-[#22c55e] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_10px_30px_rgba(0,0,0,0.3)] border-b border-white/10 z-20">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_70%)] pointer-events-none"></div>
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/15 backdrop-blur-xl rounded-[1.2rem] flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.2),inset_0_1px_2px_rgba(255,255,255,0.3)] border border-white/20 overflow-hidden group hover:scale-105 transition-transform duration-500">
+                        <img src="https://i.ibb.co/yBmYJQ9H/image.png" alt="Logo" className="w-10 h-10 object-contain filter drop-shadow-lg" />
+                      </div>
+                      <div className="text-right">
+                        <h2 className="text-xl md:text-2xl font-black tracking-tight drop-shadow-md" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>تحديث الطلب #{editingRequest.id}</h2>
+                        <p className="text-[10px] md:text-xs font-bold mt-1 text-green-50/90 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                          إدارة الحالة والتعليمات الفنية - اسناد الصيانة الهندسي
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-black text-gray-900 tracking-tight">تحديث الطلب #{editingRequest.id}</h2>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">إدارة الحالة والتعليقات الفنية</p>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditingRequest(null)}
+                      className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/10 flex items-center justify-center hover:bg-red-500/80 hover:scale-110 transition-all border border-white/20 shadow-lg group"
+                    >
+                      <X size={20} className="text-white group-hover:rotate-90 transition-transform" />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditingRequest(null)}
-                    className="w-10 h-10 rounded-2xl bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all border border-gray-100/50"
-                  >
-                    <X size={20} />
-                  </button>
                 </div>
 
-                <div className="flex-1 p-6 md:p-10 space-y-10 text-right overflow-y-auto scrollbar-hide">
+                <div className="flex-1 p-6 md:p-10 space-y-8 text-right overflow-y-auto custom-scrollbar bg-gray-50/30">
 
                   {/* Section: Request Basic Details */}
                   {(isAdmin || userSectionPerms?.editRequestDetails) && (
-                    <div className="space-y-6 p-6 md:p-8 bg-blue-50/40 rounded-[2rem] border border-blue-100/60 shadow-sm relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-110"></div>
-                      <div className="relative flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-blue-600 text-white rounded-xl shadow-md">
+                    <div className="space-y-5 p-6 md:p-7 bg-white rounded-[2rem] border-2 border-white shadow-[0_8px_25px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-1 bg-green-500 h-full"></div>
+                      <div className="relative flex items-center gap-3 mb-1">
+                        <div className="p-2 bg-green-50 text-[#1a5e1a] rounded-xl shadow-sm border border-green-100">
                           <Pen size={14} />
                         </div>
-                        <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest">تعديل البيانات الأساسية</h3>
+                        <h3 className="text-xs font-black text-gray-800 uppercase tracking-widest">تعديل البيانات الأساسية</h3>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-right relative">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-right relative">
                         {sections.find(s => s.id === editingRequest.sectionId)?.questions.map(q => (
-                          <div key={q.id} className="space-y-2">
-                            <label className="text-[13px] font-black text-blue-900/60 pr-2 uppercase tracking-tighter">{q.title}</label>
+                          <div key={q.id} className="space-y-1.5">
+                            <label className="text-[11px] font-black text-gray-500 pr-2 uppercase flex items-center gap-1.5">
+                              <div className="w-1 h-3 bg-green-500/20 rounded-full"></div>
+                              {q.title}
+                            </label>
                             <textarea
                               value={editingRequest.answers[q.id] || ''}
                               onChange={e => setEditingRequest({
                                 ...editingRequest,
                                 answers: { ...editingRequest.answers, [q.id]: e.target.value }
                               })}
-                              rows={(editingRequest.answers[q.id] || '').length > 50 ? 3 : 1}
-                              className="w-full px-5 py-3.5 bg-white rounded-xl border border-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 font-bold text-[12px] leading-relaxed shadow-sm transition-all outline-none resize-y max-h-32 overflow-y-auto whitespace-normal"
+                              rows={(editingRequest.answers[q.id] || '').length > 50 ? 2 : 1}
+                              className="w-full px-4 py-3 bg-gray-50/50 rounded-xl border-2 border-transparent focus:border-[#1a5e1a]/20 focus:bg-white font-bold text-[11px] leading-relaxed shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] transition-all outline-none resize-none max-h-32 overflow-y-auto"
                             />
                           </div>
                         ))}
@@ -3415,9 +3432,9 @@ export default function App() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <label className="text-[15px] font-black text-gray-600 pr-2 uppercase tracking-widest flex items-center gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2.5">
+                      <label className="text-xs font-black text-gray-700 pr-2 uppercase flex items-center gap-2">
                         <Building size={14} className="text-[#1a5e1a]/60" />
                         الوحدة المكلفة
                       </label>
@@ -3426,21 +3443,21 @@ export default function App() {
                           value={editingRequest.assignedUnit || ''}
                           onChange={e => setEditingRequest({ ...editingRequest, assignedUnit: e.target.value })}
                           disabled={!(isAdmin || userSectionPerms?.editAssignedUnit)}
-                          className={`w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white focus:border-[#1a5e1a] focus:ring-8 focus:ring-[#1a5e1a]/5 font-black text-gray-800 transition-all appearance-none cursor-pointer ${!(isAdmin || userSectionPerms?.editAssignedUnit) ? 'cursor-not-allowed opacity-60 bg-gray-50' : ''}`}
+                          className={`w-full px-5 py-3.5 rounded-xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] focus:border-[#1a5e1a]/30 focus:shadow-md font-black text-xs text-gray-800 transition-all appearance-none cursor-pointer ${!(isAdmin || userSectionPerms?.editAssignedUnit) ? 'cursor-not-allowed opacity-60 bg-gray-50 shadow-none' : ''}`}
                         >
                           <option value="">بانتظار التوزيع</option>
                           {(sections.find(s => s.id === editingRequest.sectionId)?.sectionUnits || globalUnits).map(unit => (
                             <option key={unit} value={unit}>{unit}</option>
                           ))}
                         </select>
-                        <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#1a5e1a] transition-colors">
-                          <ArrowLeft size={16} className="-rotate-90 opacity-40" />
+                        <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#1a5e1a] transition-colors">
+                          <Menu size={16} className="opacity-40" />
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="text-[15px] font-black text-gray-600 pr-2 uppercase tracking-widest flex items-center gap-2">
+                    <div className="space-y-2.5">
+                      <label className="text-xs font-black text-gray-700 pr-2 uppercase flex items-center gap-2">
                         <Activity size={14} className="text-[#1a5e1a]/60" />
                         حالة الإنجاز
                       </label>
@@ -3459,15 +3476,15 @@ export default function App() {
                                   status: e.target.value
                                 })}
                                 disabled={!canEditStatus}
-                                className={`w-full px-5 py-4 rounded-2xl border-2 border-gray-100 bg-white focus:border-[#1a5e1a] focus:ring-8 focus:ring-[#1a5e1a]/5 font-black text-gray-800 transition-all appearance-none cursor-pointer ${!canEditStatus ? 'cursor-not-allowed opacity-60 bg-gray-50' : ''}`}
+                                className={`w-full px-5 py-3.5 rounded-xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] focus:border-[#1a5e1a]/30 focus:shadow-md font-black text-xs text-gray-800 transition-all appearance-none cursor-pointer ${!canEditStatus ? 'cursor-not-allowed opacity-60 bg-gray-50 shadow-none' : ''}`}
                               >
                                 <option value="">قيد الانتظار</option>
                                 {(sections.find(s => s.id === editingRequest.sectionId)?.availableStatuses || ['قيد العمل (جاري التنفيذ)', 'تم الإنجاز (منجز)', 'مرفوض / ملغي']).map(status => (
                                   <option key={status} value={status}>{status}</option>
                                 ))}
                               </select>
-                              <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#1a5e1a] transition-colors">
-                                <ArrowLeft size={16} className="-rotate-90 opacity-40" />
+                              <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#1a5e1a] transition-colors">
+                                <Menu size={16} className="opacity-40" />
                               </div>
                             </div>
                             {!canEditStatus && userSectionPerms?.isUnitLead && (
@@ -3481,8 +3498,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[15px] font-black text-gray-600 pr-2 uppercase tracking-widest flex items-center gap-2">
+                  <div className="space-y-2.5">
+                    <label className="text-xs font-black text-gray-700 pr-2 uppercase flex items-center gap-2">
                       <MessageCircle size={14} className="text-[#1a5e1a]/60" />
                       التفاصيل والتقارير الفنية
                     </label>
@@ -3492,35 +3509,51 @@ export default function App() {
                         (userSectionPerms?.isUnitLead && userSectionPerms?.units?.includes(editingRequest.assignedUnit));
 
                       return (
-                        <textarea
-                          value={editingRequest.sectionNotes || ''}
-                          onChange={e => setEditingRequest({ ...editingRequest, sectionNotes: e.target.value })}
-                          disabled={!canEditNotes}
-                          rows={4}
-                          className={`w-full px-6 py-4 rounded-[1.8rem] border-2 border-gray-100 focus:border-[#1a5e1a] focus:ring-8 focus:ring-[#1a5e1a]/5 font-bold resize-none bg-white transition-all ${!canEditNotes ? 'cursor-not-allowed opacity-60 bg-gray-50' : ''}`}
-                          placeholder="وثق هنا الإجراءات المتخذة أو قطع الغيار المستبدلة..."
-                        ></textarea>
+                        <div className="relative group">
+                          <textarea
+                            value={editingRequest.sectionNotes || ''}
+                            onChange={e => setEditingRequest({ ...editingRequest, sectionNotes: e.target.value })}
+                            disabled={!canEditNotes}
+                            rows={3}
+                            className={`w-full px-5 py-4 rounded-2xl border-2 border-white bg-white shadow-[0_4px_10px_rgba(0,0,0,0.03),inset_0_1px_2px_rgba(0,0,0,0.02)] focus:border-[#1a5e1a]/30 focus:shadow-md font-bold text-xs resize-none transition-all ${!canEditNotes ? 'cursor-not-allowed opacity-60 bg-gray-50 shadow-none' : ''}`}
+                            placeholder="وثق هنا الإجراءات المتخذة أو قطع الغيار المستبدلة..."
+                          ></textarea>
+                          <Pen size={14} className="absolute left-5 bottom-5 text-gray-200 group-focus-within:text-[#1a5e1a] transition-colors" />
+                        </div>
                       );
                     })()}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-4 border-t border-gray-100">
-                    <div className="flex gap-3 w-full sm:w-auto">
-                      <button type="button" onClick={() => setEditingRequest(null)} className="px-8 py-3 rounded-xl font-bold text-gray-400 hover:bg-gray-100 transition-all flex-1 sm:flex-none">إلغاء</button>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-2 border-t border-gray-100">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => setEditingRequest(null)}
+                        className="flex-1 sm:flex-none px-6 py-3 rounded-xl font-black text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all text-xs border border-transparent hover:border-gray-200 flex items-center justify-center gap-2"
+                      >
+                        <X size={16} />
+                        <span>إلغاء</span>
+                      </button>
                       {isAdmin && (
                         <button
                           type="button"
                           onClick={() => deleteRequest(editingRequest.id)}
-                          className="w-12 h-12 bg-red-600 text-white rounded-xl flex items-center justify-center hover:bg-red-700 transition-all shadow-lg border border-red-500"
+                          className="w-11 h-11 bg-white text-red-500 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-all shadow-sm border border-red-100"
                           title="حذف الطلب نهائياً"
                         >
                           <Trash2 size={20} />
                         </button>
                       )}
                     </div>
-                    <button type="submit" className="w-full sm:w-auto px-12 py-4 bg-[#1a5e1a] hover:bg-[#2d7d2d] text-white rounded-xl font-black shadow-xl shadow-[#1a5e1a]/20 hover:shadow-[#1a5e1a]/40 hover:-translate-y-0.5 transition-all text-sm flex items-center justify-center gap-3">
-                      <span>تحديث البيانات</span>
-                      <ArrowLeft size={18} className="rotate-180" />
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-10 py-3.5 bg-gradient-to-r from-[#1a5e1a] to-[#22c55e] text-white rounded-xl font-black shadow-[0_10px_20px_-5px_rgba(26,94,26,0.3)] hover:shadow-[0_15px_25px_-5px_rgba(26,94,26,0.4)] hover:-translate-y-1 active:scale-95 transition-all text-sm flex items-center justify-center gap-3 relative overflow-hidden group"
+                    >
+                      <div className="relative z-10 flex items-center gap-2">
+                        <span>تحديث البيانات</span>
+                        <ArrowLeft size={18} className="rotate-180 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
                     </button>
                   </div>
                 </div>
