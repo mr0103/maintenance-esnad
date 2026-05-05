@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { User, Lock, Eye, EyeOff, ArrowLeft, MessageCircle, Activity, Clock, Layers, Bell, BellOff, Download, Trash2, Menu, X, Pen, Building, LayoutDashboard, Wrench, Users, Settings, LogOut, ShieldCheck, FileSpreadsheet } from 'lucide-react';
+import { User, Lock, Eye, EyeOff, ArrowLeft, MessageCircle, Activity, Clock, Layers, Bell, BellOff, Download, Trash2, Menu, X, Pen, Building, LayoutDashboard, Wrench, Users, Settings, LogOut, ShieldCheck, FileSpreadsheet, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import editIcon from './assets/edit_icon.png';
 import whatsappIcon from './assets/whatsapp_icon.jpg';
@@ -1060,13 +1060,21 @@ export default function App() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('الكل');
+  const [filterUnit, setFilterUnit] = useState('الكل');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 50;
 
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, startDate, endDate, filterStatus, activeSection]);
+  }, [searchTerm, startDate, endDate, filterStatus, filterUnit]);
+
+  // Reset filters when switching sections
+  useEffect(() => {
+    setFilterStatus('الكل');
+    setFilterUnit('الكل');
+    setSearchTerm('');
+  }, [activeSection]);
 
   const filteredRequests = useMemo(() => {
     // Advanced Arabic Normalization for "Fuzzy" matching
@@ -1094,6 +1102,12 @@ export default function App() {
         if (reqStatus !== filterStatus) return false;
       }
 
+      // Unit filtering
+      if (filterUnit !== 'الكل') {
+        const reqUnit = r.assignedUnit || 'بانتظار التوزيع';
+        if (reqUnit !== filterUnit) return false;
+      }
+
       if (!searchTerm) return true;
 
       // Multi-Field & Multi-Term Search Logic
@@ -1116,7 +1130,7 @@ export default function App() {
       // A record matches if EVERY term in the search string is found ANYWHERE in its searchable fields
       return searchTerms.every(term => combinedText.includes(term));
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [requests, activeSection, startDate, endDate, filterStatus, searchTerm]);
+  }, [requests, activeSection, startDate, endDate, filterStatus, filterUnit, searchTerm]);
 
   const getFilteredRequests = () => filteredRequests;
 
@@ -2474,72 +2488,122 @@ export default function App() {
                                 </div>
 
                                 <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 animate-in fade-in duration-500">
-                                  <div className="py-1 px-4 bg-gray-50 border-b border-gray-100 flex flex-col xl:flex-row justify-between items-center gap-2">
-                                    <h3 className="text-base font-black text-gray-800 shrink-0">بيانات طلبات الصيانة - مجمع {sections.find(s => s.id === activeSection)?.name}</h3>
-                                    <div className="flex flex-wrap gap-2 items-center justify-end w-full">
-                                      {/* Search Input */}
-                                      <div className="relative">
-                                        <input
-                                          className="pr-10 pl-12 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#1a5e1a] focus:outline-none w-56 shadow-inner"
-                                          placeholder="بحث شامل (اسم، حالة، تفاصيل)..."
-                                          value={searchTerm}
-                                          onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</div>
-                                        {searchTerm && (
-                                          <div className="absolute left-3 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[9px] font-bold border border-blue-100 animate-in zoom-in duration-300">
-                                            {filteredRequests.length}
+                                  {/* Professional Filter & Search Bar */}
+                                  <div className="p-4 bg-gradient-to-r from-gray-50/80 to-white/80 border-b border-gray-100 backdrop-blur-md sticky top-0 z-30 shadow-sm">
+                                    <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+                                      {/* Title & Stats */}
+                                      <div className="flex items-center gap-3 shrink-0">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-[#1a5e1a] to-[#0d3b0d] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[#1a5e1a]/20">
+                                          <FileSpreadsheet size={20} />
+                                        </div>
+                                        <div>
+                                          <h3 className="text-sm md:text-base font-black text-gray-800 leading-tight">بيانات طلبات الصيانة</h3>
+                                          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">مجمع {sections.find(s => s.id === activeSection)?.name}</p>
+                                        </div>
+                                      </div>
+
+                                      {/* Integrated Search & Filters Toolbar */}
+                                      <div className="flex flex-wrap items-center justify-end gap-3 w-full">
+                                        {/* Search Group */}
+                                        <div className="relative group flex-1 max-w-md min-w-[240px]">
+                                          <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#1a5e1a] transition-colors">
+                                            <Search size={18} />
                                           </div>
-                                        )}
-                                      </div>
-
-                                      {/* Status Filter */}
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-gray-400">الحالة:</span>
-                                        <select
-                                          value={filterStatus}
-                                          onChange={(e) => setFilterStatus(e.target.value)}
-                                          className="px-3 py-2 rounded-xl border border-gray-200 text-[10px] font-bold focus:border-[#1a5e1a] focus:outline-none bg-white shadow-sm"
-                                        >
-                                          <option value="الكل">الكل</option>
-                                          <option value="قيد الانتظار">قيد الانتظار</option>
-                                          {sections.find(s => s.id === activeSection)?.availableStatuses.map(s => (
-                                            s !== 'قيد الانتظار' && <option key={s} value={s}>{s}</option>
-                                          ))}
-                                        </select>
-                                      </div>
-
-                                      {/* Date Filters */}
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1">
-                                          <span className="text-[10px] font-black text-gray-400">من:</span>
                                           <input
-                                            type="date"
-                                            value={startDate}
-                                            onChange={(e) => setStartDate(e.target.value)}
-                                            className="px-2 py-1.5 rounded-lg border border-gray-200 text-[10px] font-bold focus:border-[#1a5e1a] focus:outline-none bg-white shadow-sm"
+                                            className="w-full pr-11 pl-14 py-2.5 bg-white rounded-2xl border-2 border-gray-100 text-sm font-bold focus:border-[#1a5e1a] focus:ring-4 focus:ring-[#1a5e1a]/5 outline-none transition-all shadow-sm hover:shadow-md placeholder:text-gray-300"
+                                            placeholder="بحث في الطلبات (رقم، اسم، تفاصيل)..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
                                           />
+                                          {searchTerm && (
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 bg-[#1a5e1a]/5 text-[#1a5e1a] rounded-xl text-[10px] font-black border border-[#1a5e1a]/10 animate-in zoom-in duration-300">
+                                              <span>{filteredRequests.length}</span>
+                                              <span>نتيجة</span>
+                                            </div>
+                                          )}
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                          <span className="text-[10px] font-black text-gray-400">إلى:</span>
-                                          <input
-                                            type="date"
-                                            value={endDate}
-                                            onChange={(e) => setEndDate(e.target.value)}
-                                            className="px-2 py-1.5 rounded-lg border border-gray-200 text-[10px] font-bold focus:border-[#1a5e1a] focus:outline-none bg-white shadow-sm"
-                                          />
-                                        </div>
-                                        {(startDate || endDate || filterStatus !== 'الكل') && (
-                                          <button
-                                            onClick={() => { setStartDate(''); setEndDate(''); setFilterStatus('الكل'); }}
-                                            className="text-[10px] font-black text-red-500 underline hover:text-red-700 transition-colors"
+
+                                        {/* Filters Group - 3D Styled */}
+                                        <div className="flex flex-wrap items-center gap-2 p-1.5 bg-gray-100/50 rounded-2xl border border-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] backdrop-blur-sm">
+                                          {/* Status Dropdown */}
+                                          <motion.div whileHover={{ scale: 1.02 }} className="relative">
+                                            <select
+                                              value={filterStatus}
+                                              onChange={(e) => setFilterStatus(e.target.value)}
+                                              className="appearance-none pr-9 pl-4 py-2 bg-white rounded-xl border border-gray-200 text-[11px] font-black text-gray-700 hover:border-[#1a5e1a] focus:outline-none focus:ring-4 focus:ring-[#1a5e1a]/10 cursor-pointer shadow-sm transition-all"
+                                            >
+                                              <option value="الكل"> حالة العمل</option>
+                                              <option value="قيد الانتظار">⏳ قيد الانتظار</option>
+                                              {sections.find(s => s.id === activeSection)?.availableStatuses.map(s => (
+                                                s !== 'قيد الانتظار' && <option key={s} value={s}>{s}</option>
+                                              ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#1a5e1a]/60">
+                                              <Layers size={14} />
+                                            </div>
+                                          </motion.div>
+
+                                          {/* Unit Dropdown */}
+                                          <motion.div whileHover={{ scale: 1.02 }} className="relative">
+                                            <select
+                                              value={filterUnit}
+                                              onChange={(e) => setFilterUnit(e.target.value)}
+                                              className="appearance-none pr-9 pl-4 py-2 bg-white rounded-xl border border-gray-200 text-[11px] font-black text-gray-700 hover:border-[#1a5e1a] focus:outline-none focus:ring-4 focus:ring-[#1a5e1a]/10 cursor-pointer shadow-sm transition-all"
+                                            >
+                                              <option value="الكل">فلتر الوحدات</option>
+                                              <option value="بانتظار التوزيع">🚫 غير مسند</option>
+                                              {sections.find(s => s.id === activeSection)?.sectionUnits?.map(u => (
+                                                <option key={u} value={u}>⚙️ {u}</option>
+                                              ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#1a5e1a]/60">
+                                              <Wrench size={14} />
+                                            </div>
+                                          </motion.div>
+
+                                          {/* Unified Date Range Window */}
+                                          <motion.div
+                                            whileHover={{ scale: 1.01 }}
+                                            className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200 shadow-sm hover:border-[#1a5e1a] transition-colors"
                                           >
-                                            إعادة تعيين الفلاتر
-                                          </button>
-                                        )}
+                                            <div className="flex items-center gap-2 px-2 text-[#1a5e1a]/60 border-l border-gray-100 ml-1">
+                                              <Clock size={14} />
+                                              <span className="text-[9px] font-black uppercase text-gray-400">الفترة</span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                              <input
+                                                type="date"
+                                                value={startDate}
+                                                onChange={(e) => setStartDate(e.target.value)}
+                                                className="bg-transparent border-none focus:outline-none text-[10px] font-bold text-gray-700 p-1 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors rtl"
+                                              />
+                                              <span className="text-gray-300 font-bold px-1">←</span>
+                                              <input
+                                                type="date"
+                                                value={endDate}
+                                                onChange={(e) => setEndDate(e.target.value)}
+                                                className="bg-transparent border-none focus:outline-none text-[10px] font-bold text-gray-700 p-1 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors rtl"
+                                              />
+                                            </div>
+                                          </motion.div>
+
+                                          {/* Reset Action */}
+                                          <AnimatePresence>
+                                            {(startDate || endDate || filterStatus !== 'الكل' || filterUnit !== 'الكل') && (
+                                              <motion.button
+                                                initial={{ opacity: 0, scale: 0.8, x: 10 }}
+                                                animate={{ opacity: 1, scale: 1, x: 0 }}
+                                                exit={{ opacity: 0, scale: 0.8, x: 10 }}
+                                                onClick={() => { setStartDate(''); setEndDate(''); setFilterStatus('الكل'); setFilterUnit('الكل'); }}
+                                                className="p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                                                title="إعادة تعيين كافة الفلاتر"
+                                              >
+                                                <X size={18} />
+                                              </motion.button>
+                                            )}
+                                          </AnimatePresence>
+                                        </div>
                                       </div>
-
-
                                     </div>
                                   </div>
 
